@@ -18,6 +18,13 @@ DEFAULT_DB_PATH = os.environ.get(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "airbnb.db"),
 )
 
+# Persistent uploads directory: lives alongside persistent SQLite database (e.g. /data/uploads or backend/uploads)
+UPLOAD_DIR = os.environ.get(
+    "UPLOAD_DIR",
+    os.path.join(os.path.dirname(DEFAULT_DB_PATH), "uploads"),
+)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 
 def get_connection(db_path: str | None = None) -> sqlite3.Connection:
     """

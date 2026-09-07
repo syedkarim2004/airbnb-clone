@@ -18,3 +18,7 @@ venv/
 # Misc
 .DS_Store
 *.tsbuildinfo
+*.db
+*.sqlite
+*.sqlite3
+uploads/

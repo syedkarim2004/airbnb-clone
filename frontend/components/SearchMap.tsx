@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Listing } from "@/types/listing";
+import { getImageUrl } from "@/lib/api";
 import styles from "./SearchMap.module.css";
 
 interface SearchMapProps {
@@ -251,7 +252,7 @@ export function SearchMap({
                 {listing.images && listing.images.length > 0 && (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
-                    src={listing.images[0]}
+                    src={getImageUrl(listing.images[0])}
                     alt={listing.title}
                     className={styles.previewImage}
                   />

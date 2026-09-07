@@ -9,6 +9,7 @@ import {
   createBooking,
   getListingReviews,
   createReview,
+  getImageUrl,
   BookingResponse,
 } from "@/lib/api";
 import { Listing } from "@/types/listing";
@@ -32,6 +33,11 @@ function getAmenityIcon(name: string) {
   if (lower.includes("gym")) return "🏋️";
   return "✨";
 }
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
 export default function ListingDetailPage() {
   const router = useRouter();
@@ -59,13 +65,39 @@ export default function ListingDetailPage() {
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
+  // Dynamic initial booking dates (7 days and 10 days in the future)
+  const defaultDates = useMemo(() => {
+    const today = new Date();
+    const ci = new Date(today);
+    ci.setDate(today.getDate() + 7);
+    const co = new Date(today);
+    co.setDate(today.getDate() + 10);
+    return {
+      checkIn: ci.toISOString().split("T")[0],
+      checkOut: co.toISOString().split("T")[0],
+    };
+  }, []);
+
   // Booking widget state
-  const [checkInDate, setCheckInDate] = useState<string>("2026-11-10");
-  const [checkOutDate, setCheckOutDate] = useState<string>("2026-11-13");
+  const [checkInDate, setCheckInDate] = useState<string>(() => {
+    const today = new Date();
+    const ci = new Date(today);
+    ci.setDate(today.getDate() + 7);
+    return ci.toISOString().split("T")[0];
+  });
+  const [checkOutDate, setCheckOutDate] = useState<string>(() => {
+    const today = new Date();
+    const co = new Date(today);
+    co.setDate(today.getDate() + 10);
+    return co.toISOString().split("T")[0];
+  });
   const [guestCount, setGuestCount] = useState<number>(1);
   const [isReserving, setIsReserving] = useState<boolean>(false);
   const [bookingSuccess, setBookingSuccess] = useState<BookingResponse | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
+
+  const [calMonth, setCalMonth] = useState<number>(() => new Date().getMonth());
+  const [calYear, setCalYear] = useState<number>(() => new Date().getFullYear());
 
   const isSaved = listing ? isFavorite(listing.id) : false;
 
@@ -196,10 +228,10 @@ export default function ListingDetailPage() {
         "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80",
       ];
     }
-    // Pad to at least 5 for the collage
-    const arr = [...listing.images];
+    const resolved = listing.images.map((img) => getImageUrl(img));
+    const arr = [...resolved];
     while (arr.length < 5) {
-      arr.push(listing.images[arr.length % listing.images.length]);
+      arr.push(resolved[arr.length % resolved.length]);
     }
     return arr;
   }, [listing]);
@@ -233,6 +265,107 @@ export default function ListingDetailPage() {
   const bedrooms = Math.max(1, Math.floor(listing.max_guests / 2));
   const beds = Math.max(1, listing.max_guests);
   const bathrooms = Math.max(1, Math.floor(listing.max_guests / 2));
+
+  const handlePrevMonth = () => {
+    const today = new Date();
+    if (calYear === today.getFullYear() && calMonth <= today.getMonth()) {
+      return;
+    }
+    if (calMonth === 0) {
+      setCalMonth(11);
+      setCalYear((y) => y - 1);
+    } else {
+      setCalMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calMonth === 11) {
+      setCalMonth(0);
+      setCalYear((y) => y + 1);
+    } else {
+      setCalMonth((m) => m + 1);
+    }
+  };
+
+  const isPrevMonthDisabled = () => {
+    const today = new Date();
+    return calYear === today.getFullYear() && calMonth <= today.getMonth();
+  };
+
+  const nextCalMonth = calMonth === 11 ? 0 : calMonth + 1;
+  const nextCalYear = calMonth === 11 ? calYear + 1 : calYear;
+
+  const handleCalDateClick = (year: number, month: number, day: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(year, month, day);
+    selected.setHours(0, 0, 0, 0);
+    if (selected.getTime() < today.getTime()) return;
+
+    const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+    if (!checkInDate || (checkInDate && checkOutDate)) {
+      setCheckInDate(formatted);
+      setCheckOutDate("");
+    } else {
+      if (formatted <= checkInDate) {
+        setCheckInDate(formatted);
+        setCheckOutDate("");
+      } else {
+        setCheckOutDate(formatted);
+      }
+    }
+  };
+
+  const renderDetailMonthGrid = (year: number, month: number) => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return (
+      <div className={styles.daysGrid}>
+        {Array.from({ length: firstDayIndex }).map((_, i) => (
+          <button
+            key={`empty-${year}-${month}-${i}`}
+            type="button"
+            className={`${styles.dayBtn} ${styles.dayDisabled}`}
+            disabled
+          />
+        ))}
+
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const dayNum = i + 1;
+          const currentDayDate = new Date(year, month, dayNum);
+          currentDayDate.setHours(0, 0, 0, 0);
+          const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+          const isPast = currentDayDate.getTime() < today.getTime();
+          const isCheckIn = checkInDate === formatted;
+          const isCheckOut = checkOutDate === formatted;
+          const inRange =
+            checkInDate &&
+            checkOutDate &&
+            formatted > checkInDate &&
+            formatted < checkOutDate;
+
+          return (
+            <button
+              type="button"
+              key={`day-${year}-${month}-${dayNum}`}
+              disabled={isPast}
+              className={`${styles.dayBtn} ${isPast ? styles.dayDisabled : ""} ${
+                isCheckIn || isCheckOut ? styles.daySelected : ""
+              } ${inRange ? styles.dayInRange : ""}`}
+              onClick={() => !isPast && handleCalDateClick(year, month, dayNum)}
+            >
+              {dayNum}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className={styles.pageWrapper}>
@@ -441,73 +574,83 @@ export default function ListingDetailPage() {
                 {nights} {nights === 1 ? "night" : "nights"} in {listing.city}
               </h3>
               <p className={styles.calendarSubtitle}>
-                {checkInDate} – {checkOutDate}
+                {checkInDate && checkOutDate
+                  ? `${checkInDate} – ${checkOutDate}`
+                  : checkInDate
+                  ? `${checkInDate} – Select checkout`
+                  : "Select dates"}
               </p>
 
               <div className={styles.calendarMonthsRow}>
-                {/* Month 1: November 2026 */}
+                {/* Month 1 */}
                 <div className={styles.monthBlock}>
-                  <div className={styles.monthHeader}>November 2026</div>
+                  <div className={styles.monthHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      onClick={handlePrevMonth}
+                      disabled={isPrevMonthDisabled()}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: isPrevMonthDisabled() ? "default" : "pointer",
+                        opacity: isPrevMonthDisabled() ? 0.3 : 1,
+                        fontSize: "1.1rem",
+                        padding: "2px 8px",
+                        borderRadius: "50%",
+                      }}
+                      aria-label="Previous month"
+                    >
+                      ‹
+                    </button>
+                    <span>{MONTH_NAMES[calMonth]} {calYear}</span>
+                    <span style={{ width: "24px" }} />
+                  </div>
                   <div className={styles.weekDaysRow}>
                     <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
                   </div>
-                  <div className={styles.daysGrid}>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>1</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>2</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>3</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>4</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>5</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>6</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled>7</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-11-08")}>8</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-11-09")}>9</button>
-                    <button type="button" className={`${styles.dayBtn} ${checkInDate === "2026-11-10" ? styles.daySelected : ""}`} onClick={() => setCheckInDate("2026-11-10")}>10</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayInRange}`}>11</button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayInRange}`}>12</button>
-                    <button type="button" className={`${styles.dayBtn} ${checkOutDate === "2026-11-13" ? styles.daySelected : ""}`} onClick={() => setCheckOutDate("2026-11-13")}>13</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-14")}>14</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-15")}>15</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-16")}>16</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-17")}>17</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-18")}>18</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-19")}>19</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckOutDate("2026-11-20")}>20</button>
-                  </div>
+                  {renderDetailMonthGrid(calYear, calMonth)}
                 </div>
 
-                {/* Month 2: December 2026 */}
+                {/* Month 2 */}
                 <div className={styles.monthBlock}>
-                  <div className={styles.monthHeader}>December 2026</div>
+                  <div className={styles.monthHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ width: "24px" }} />
+                    <span>{MONTH_NAMES[nextCalMonth]} {nextCalYear}</span>
+                    <button
+                      type="button"
+                      onClick={handleNextMonth}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "1.1rem",
+                        padding: "2px 8px",
+                        borderRadius: "50%",
+                      }}
+                      aria-label="Next month"
+                    >
+                      ›
+                    </button>
+                  </div>
                   <div className={styles.weekDaysRow}>
                     <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
                   </div>
-                  <div className={styles.daysGrid}>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled></button>
-                    <button type="button" className={`${styles.dayBtn} ${styles.dayDisabled}`} disabled></button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-01")}>1</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-02")}>2</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-03")}>3</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-04")}>4</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-05")}>5</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-06")}>6</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-07")}>7</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-08")}>8</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-09")}>9</button>
-                    <button type="button" className={styles.dayBtn} onClick={() => setCheckInDate("2026-12-10")}>10</button>
-                  </div>
+                  {renderDetailMonthGrid(nextCalYear, nextCalMonth)}
                 </div>
               </div>
 
-              <button
-                type="button"
-                className={styles.clearDatesBtn}
-                onClick={() => {
-                  setCheckInDate("2026-11-10");
-                  setCheckOutDate("2026-11-13");
-                }}
-              >
-                Reset dates
-              </button>
+              <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+                <button
+                  type="button"
+                  className={styles.clearDatesBtn}
+                  onClick={() => {
+                    setCheckInDate(defaultDates.checkIn);
+                    setCheckOutDate(defaultDates.checkOut);
+                  }}
+                >
+                  Reset dates
+                </button>
+              </div>
             </section>
 
             {/* Amenities Section */}
@@ -720,15 +863,25 @@ export default function ListingDetailPage() {
                   <label className={styles.boxLabel}>Check-in</label>
                   <input
                     type="date"
+                    min={new Date().toISOString().split("T")[0]}
                     className={styles.dateValueInput}
                     value={checkInDate}
-                    onChange={(e) => setCheckInDate(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCheckInDate(val);
+                      if (checkOutDate && val >= checkOutDate) {
+                        const nextDay = new Date(val);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        setCheckOutDate(nextDay.toISOString().split("T")[0]);
+                      }
+                    }}
                   />
                 </div>
                 <div className={styles.dateInputCol}>
                   <label className={styles.boxLabel}>Checkout</label>
                   <input
                     type="date"
+                    min={checkInDate || new Date().toISOString().split("T")[0]}
                     className={styles.dateValueInput}
                     value={checkOutDate}
                     onChange={(e) => setCheckOutDate(e.target.value)}

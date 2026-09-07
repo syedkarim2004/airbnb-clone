@@ -278,6 +278,14 @@ def run_tests() -> None:
         print("\n── Validation: dates ───────────────────────────────────────────────")
         resp = client.post("/api/bookings", json={
             "listing_id": 1, "guest_id": 2,
+            "check_in": "2020-01-01", "check_out": "2020-01-05",
+            "guest_count": 1,
+        })
+        test("Past check_in rejected → 400", resp.status_code == 400)
+        test("Past check_in error mentions past", "past" in resp.json().get("detail", "").lower())
+
+        resp = client.post("/api/bookings", json={
+            "listing_id": 1, "guest_id": 2,
             "check_in": "2027-03-05", "check_out": "2027-03-03",
             "guest_count": 1,
         })

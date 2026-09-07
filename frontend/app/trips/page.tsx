@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
-import { getUserBookings } from "@/lib/api";
+import { getUserBookings, getImageUrl } from "@/lib/api";
 import { BookingWithListing } from "@/types/booking";
 import styles from "./page.module.css";
 
@@ -143,7 +143,7 @@ function TripCard({
       <div className={styles.imageWrapper}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={trip.listing.image || defaultImage}
+          src={getImageUrl(trip.listing.image || defaultImage)}
           alt={trip.listing.title}
           className={styles.tripImage}
         />

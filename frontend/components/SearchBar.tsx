@@ -243,7 +243,13 @@ export function SearchBar({
   };
 
   const handleDateClick = (year: number, month: number, day: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const selected = new Date(year, month, day);
+    selected.setHours(0, 0, 0, 0);
+    if (selected.getTime() < today.getTime()) {
+      return;
+    }
     if (!checkIn || (checkIn && checkOut)) {
       setDates(selected, null);
     } else {
@@ -255,7 +261,15 @@ export function SearchBar({
     }
   };
 
+  const now = new Date();
+  const currentMonthNum = now.getMonth();
+  const currentYearNum = now.getFullYear();
+  const canGoPrev =
+    calYear > currentYearNum ||
+    (calYear === currentYearNum && calMonth > currentMonthNum);
+
   const handlePrevMonth = () => {
+    if (!canGoPrev) return;
     if (calMonth === 0) {
       setCalMonth(11);
       setCalYear(calYear - 1);
@@ -279,6 +293,8 @@ export function SearchBar({
   const renderMonthGrid = (year: number, month: number) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayIndex = new Date(year, month, 1).getDay();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     return (
       <div className={styles.monthDaysGrid}>
@@ -289,6 +305,8 @@ export function SearchBar({
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const dayNum = i + 1;
           const currentDayDate = new Date(year, month, dayNum);
+          currentDayDate.setHours(0, 0, 0, 0);
+          const isPast = currentDayDate.getTime() < today.getTime();
           const isCheckIn = checkIn && currentDayDate.getTime() === checkIn.getTime();
           const isCheckOut = checkOut && currentDayDate.getTime() === checkOut.getTime();
           const inRange =
@@ -301,10 +319,13 @@ export function SearchBar({
             <button
               type="button"
               key={`day-${year}-${month}-${dayNum}`}
+              disabled={isPast}
               className={`${styles.dayBtn} ${
-                isCheckIn || isCheckOut ? styles.daySelected : ""
-              } ${inRange ? styles.dayInRange : ""}`}
-              onClick={() => handleDateClick(year, month, dayNum)}
+                isPast ? styles.dayDisabled : ""
+              } ${isCheckIn || isCheckOut ? styles.daySelected : ""} ${
+                inRange ? styles.dayInRange : ""
+              }`}
+              onClick={() => !isPast && handleDateClick(year, month, dayNum)}
             >
               {dayNum}
             </button>

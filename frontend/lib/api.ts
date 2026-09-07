@@ -19,6 +19,25 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
+ * Resolves image URLs for both remote seeded images (Unsplash) and
+ * backend-hosted uploads (/uploads/...).
+ */
+export function getImageUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("data:") ||
+    url.startsWith("blob:")
+  ) {
+    return url;
+  }
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+  const cleanPath = url.replace(/^\/+/, "");
+  return `${apiBase}/${cleanPath}`;
+}
+
+/**
  * Custom error class for API errors to make error handling clean and typed.
  */
 export class ApiError extends Error {
@@ -272,3 +291,36 @@ export async function getHostBookings(hostId: number): Promise<HostBooking[]> {
 export async function getAmenities(): Promise<string[]> {
   return fetchJson<string[]>("/api/amenities");
 }
+
+export async function uploadHostPhotos(userId: number, files: File[]): Promise<string[]> {
+  const url = `${API_BASE_URL}/api/host/upload`;
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "X-User-Id": userId.toString(),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorDetail = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const data = await response.json();
+      if (data && typeof data.detail === "string") {
+        errorDetail = data.detail;
+      }
+    } catch {
+      // Body not JSON
+    }
+    throw new ApiError(response.status, errorDetail);
+  }
+
+  const result = (await response.json()) as { urls: string[] };
+  return result.urls;
+}
+

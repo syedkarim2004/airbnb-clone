@@ -49,6 +49,10 @@ def create_booking(
     ci = _parse_date(check_in, "check_in")
     co = _parse_date(check_out, "check_out")
 
+    today = date.today()
+    if ci < today:
+        raise BookingValidationError(400, "check_in date cannot be in the past")
+
     if co <= ci:
         raise BookingValidationError(400, "check_out must be after check_in")
 

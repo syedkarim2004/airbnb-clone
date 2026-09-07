@@ -11,8 +11,11 @@ MOCK AUTHENTICATION (permitted by assignment):
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, HTTPException, Path, Query
+import os
+import uuid
+from fastapi import APIRouter, File, Header, HTTPException, Path, Query, UploadFile
 
+from database import UPLOAD_DIR, get_connection
 from app.schemas.host import (
     HostBookingResponse,
     HostListingCreateRequest,
@@ -31,6 +34,10 @@ from app.services.host_service import (
 
 router = APIRouter(prefix="/api/host", tags=["host"])
 
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
 
 def _get_host_id_header(x_user_id: str | None) -> int:
     """Extract and validate the X-User-Id header (mock auth)."""
@@ -40,6 +47,68 @@ def _get_host_id_header(x_user_id: str | None) -> int:
         return int(x_user_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="X-User-Id must be an integer")
+
+
+@router.post("/upload")
+async def upload_host_photos(
+    files: list[UploadFile] = File(...),
+    x_user_id: str | None = Header(default=None),
+):
+    """
+    Upload one or more listing photos from the host's computer.
+    Saves to the persistent upload directory with safe unique UUID filenames.
+    """
+    host_id = _get_host_id_header(x_user_id)
+    conn = get_connection()
+    try:
+        user = conn.execute("SELECT id, role FROM users WHERE id = ?", (host_id,)).fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="Host user not found")
+        if user["role"] not in ("host", "both"):
+            raise HTTPException(status_code=403, detail="User does not have host permissions")
+    finally:
+        conn.close()
+
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided for upload")
+
+    saved_urls: list[str] = []
+    for file in files:
+        filename = file.filename or "upload.jpg"
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type '{ext}'. Allowed types: JPEG, PNG, WebP."
+            )
+
+        if file.content_type and file.content_type.lower() not in ALLOWED_MIME_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported MIME type '{file.content_type}'. Allowed types: image/jpeg, image/png, image/webp."
+            )
+
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File '{filename}' exceeds maximum allowed size of 10MB."
+            )
+        if len(content) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File '{filename}' is empty."
+            )
+
+        safe_name = f"{uuid.uuid4().hex}{ext}"
+        target_path = os.path.join(UPLOAD_DIR, safe_name)
+
+        with open(target_path, "wb") as f:
+            f.write(content)
+
+        saved_urls.append(f"/uploads/{safe_name}")
+
+    return {"urls": saved_urls}
 
 
 @router.get("/listings", response_model=list[HostListingResponse])

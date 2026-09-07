@@ -1,7 +1,9 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
+from database import UPLOAD_DIR
 from app.routes.listings import router as listings_router
 from app.routes.bookings import router as bookings_router
 from app.routes.favorites import router as favorites_router
@@ -51,6 +53,9 @@ app.include_router(favorites_router)
 app.include_router(reviews_router)
 app.include_router(host_router)
 app.include_router(amenities_router)
+
+# Serve uploaded static media files (from persistent volume /data/uploads or local backend/uploads)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.on_event("startup")

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Listing } from "@/types/listing";
 import { useFavorites } from "@/context/FavoritesContext";
+import { getImageUrl } from "@/lib/api";
 import styles from "./SearchResultCard.module.css";
 
 interface SearchResultCardProps {
@@ -99,7 +100,7 @@ export function SearchResultCard({
         {currentImage ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
-            src={currentImage}
+            src={getImageUrl(currentImage)}
             alt={`${listing.title} photo ${currentImageIndex + 1}`}
             className={styles.image}
             loading="lazy"

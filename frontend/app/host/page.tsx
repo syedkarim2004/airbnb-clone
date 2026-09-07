@@ -13,6 +13,8 @@ import {
   reactivateHostListing,
   getHostBookings,
   getAmenities,
+  uploadHostPhotos,
+  getImageUrl,
 } from "@/lib/api";
 import { HostListing, HostBooking, HostListingCreate, HostListingUpdate } from "@/types/host";
 import styles from "./page.module.css";
@@ -57,6 +59,9 @@ export default function HostDashboardPage() {
   const [newAmenities, setNewAmenities] = useState<string[]>([]);
   const [submittingCreate, setSubmittingCreate] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [uploadingCreate, setUploadingCreate] = useState(false);
+  const [uploadErrorCreate, setUploadErrorCreate] = useState<string | null>(null);
+  const createFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Form states for editing
   const [editTitle, setEditTitle] = useState("");
@@ -69,6 +74,9 @@ export default function HostDashboardPage() {
   const [editAmenities, setEditAmenities] = useState<string[]>([]);
   const [submittingEdit, setSubmittingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [uploadingEdit, setUploadingEdit] = useState(false);
+  const [uploadErrorEdit, setUploadErrorEdit] = useState<string | null>(null);
+  const editFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fetch available amenities on mount
   useEffect(() => {
@@ -150,6 +158,52 @@ export default function HostDashboardPage() {
     }
   };
 
+  // Real Photo Upload Handlers
+  const handleUploadCreateFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !currentUser) return;
+    setUploadingCreate(true);
+    setUploadErrorCreate(null);
+    try {
+      const fileArray = Array.from(files);
+      const urls = await uploadHostPhotos(currentUser.id, fileArray);
+      setNewImages((prev) => [...prev, ...urls]);
+    } catch (err: unknown) {
+      setUploadErrorCreate(err instanceof Error ? err.message : "Failed to upload photos");
+    } finally {
+      setUploadingCreate(false);
+      if (createFileInputRef.current) createFileInputRef.current.value = "";
+    }
+  };
+
+  const handleUploadEditFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !currentUser) return;
+    setUploadingEdit(true);
+    setUploadErrorEdit(null);
+    try {
+      const fileArray = Array.from(files);
+      const urls = await uploadHostPhotos(currentUser.id, fileArray);
+      setEditImages((prev) => [...prev, ...urls]);
+    } catch (err: unknown) {
+      setUploadErrorEdit(err instanceof Error ? err.message : "Failed to upload photos");
+    } finally {
+      setUploadingEdit(false);
+      if (editFileInputRef.current) editFileInputRef.current.value = "";
+    }
+  };
+
+  const handleMoveImage = (index: number, direction: "left" | "right", isEdit: boolean) => {
+    const setter = isEdit ? setEditImages : setNewImages;
+    setter((prev) => {
+      const nextIndex = direction === "left" ? index - 1 : index + 1;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const copy = [...prev];
+      const temp = copy[index];
+      copy[index] = copy[nextIndex];
+      copy[nextIndex] = temp;
+      return copy;
+    });
+  };
+
   // Image & Amenity Handlers for Create
   const handleAddImage = () => {
     const trimmed = newImageUrlInput.trim();
@@ -198,6 +252,7 @@ export default function HostDashboardPage() {
     setEditImageUrlInput("");
     setEditAmenities(listing.amenities ? [...listing.amenities] : []);
     setEditError(null);
+    setUploadErrorEdit(null);
   };
 
   // Handle Edit Submit
@@ -627,67 +682,129 @@ export default function HostDashboardPage() {
                   />
                 </div>
 
-                {/* Photos (Multiple URLs) */}
+                {/* Photos Upload & Management */}
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Listing Photos</label>
                   <p className={styles.formHelpText}>
-                    Add one or more photo URLs. The first photo is your main cover photo (position 0).
+                    Upload high quality photos from your computer. The first photo is your main Cover photo (position 0).
                   </p>
-                  <div className={styles.imageInputRow}>
-                    <input
-                      type="url"
-                      className={styles.formInput}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      value={newImageUrlInput}
-                      onChange={(e) => setNewImageUrlInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddImage();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className={styles.addImageBtn}
-                      onClick={handleAddImage}
-                    >
-                      + Add Photo
-                    </button>
+
+                  {/* Upload Dropzone Button */}
+                  <input
+                    type="file"
+                    ref={createFileInputRef}
+                    className={styles.hiddenFileInput}
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => handleUploadCreateFiles(e.target.files)}
+                  />
+
+                  <div
+                    className={styles.uploadDropzone}
+                    onClick={() => createFileInputRef.current?.click()}
+                  >
+                    <span className={styles.uploadIcon}>📷</span>
+                    <span className={styles.uploadText}>
+                      {uploadingCreate ? "Uploading photos..." : "Choose photos from your computer"}
+                    </span>
+                    <span className={styles.uploadSubtext}>
+                      Supports JPG, PNG, and WebP (up to 10MB each)
+                    </span>
                   </div>
 
+                  {uploadingCreate && (
+                    <div className={styles.uploadingSpinner}>
+                      <span>⏳</span> Uploading and saving photos to persistent storage...
+                    </div>
+                  )}
+
+                  {uploadErrorCreate && (
+                    <div className={styles.errorAlert}>{uploadErrorCreate}</div>
+                  )}
+
+                  {/* Photo Preview Grid with Reorder and Cover Badge */}
                   {newImages.length > 0 && (
-                    <div className={styles.imageList}>
+                    <div className={styles.photoGrid}>
                       {newImages.map((url, idx) => (
-                        <div key={idx} className={styles.imageItem}>
-                          <span className={styles.imageIndexBadge}>
-                            {idx === 0 ? "Cover (Hero)" : `#${idx + 1}`}
-                          </span>
+                        <div
+                          key={`new-img-${idx}`}
+                          className={`${styles.photoCard} ${idx === 0 ? styles.photoCardCover : ""}`}
+                        >
+                          {idx === 0 ? (
+                            <span className={styles.coverBadge}>★ Cover</span>
+                          ) : (
+                            <span className={styles.photoOrderBadge}>#{idx + 1}</span>
+                          )}
+
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={url}
-                            alt={`Preview ${idx + 1}`}
-                            className={styles.imageThumb}
+                            src={getImageUrl(url)}
+                            alt={`Photo ${idx + 1}`}
+                            className={styles.photoThumb}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
                                 "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=300";
                             }}
                           />
-                          <span className={styles.imageUrlText} title={url}>
-                            {url}
-                          </span>
-                          <button
-                            type="button"
-                            className={styles.imageRemoveBtn}
-                            onClick={() => handleRemoveImage(idx)}
-                            title="Remove Photo"
-                          >
-                            ✕
-                          </button>
+
+                          <div className={styles.photoControls}>
+                            <button
+                              type="button"
+                              className={styles.photoOrderBtn}
+                              disabled={idx === 0}
+                              onClick={() => handleMoveImage(idx, "left", false)}
+                              title="Move photo left (higher priority)"
+                            >
+                              ←
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.photoOrderBtn}
+                              disabled={idx === newImages.length - 1}
+                              onClick={() => handleMoveImage(idx, "right", false)}
+                              title="Move photo right"
+                            >
+                              →
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.photoDeleteBtn}
+                              onClick={() => handleRemoveImage(idx)}
+                              title="Remove photo"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
+
+                  {/* Fallback URL row */}
+                  <div style={{ marginTop: "10px" }}>
+                    <div className={styles.imageInputRow}>
+                      <input
+                        type="url"
+                        className={styles.formInput}
+                        placeholder="Or paste an image URL (e.g. Unsplash)..."
+                        value={newImageUrlInput}
+                        onChange={(e) => setNewImageUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddImage();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={styles.addImageBtn}
+                        onClick={handleAddImage}
+                      >
+                        + Add URL
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Amenities Selection */}
@@ -822,67 +939,126 @@ export default function HostDashboardPage() {
                   />
                 </div>
 
-                {/* Edit Photos */}
+                {/* Edit Photos Upload & Management */}
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Listing Photos</label>
                   <p className={styles.formHelpText}>
-                    Manage photo URLs for this listing.
+                    Upload new photos or reorder existing ones. The first photo is the Cover photo (position 0).
                   </p>
-                  <div className={styles.imageInputRow}>
-                    <input
-                      type="url"
-                      className={styles.formInput}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      value={editImageUrlInput}
-                      onChange={(e) => setEditImageUrlInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddEditImage();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className={styles.addImageBtn}
-                      onClick={handleAddEditImage}
-                    >
-                      + Add Photo
-                    </button>
+
+                  <input
+                    type="file"
+                    ref={editFileInputRef}
+                    className={styles.hiddenFileInput}
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => handleUploadEditFiles(e.target.files)}
+                  />
+
+                  <div
+                    className={styles.uploadDropzone}
+                    onClick={() => editFileInputRef.current?.click()}
+                  >
+                    <span className={styles.uploadIcon}>📷</span>
+                    <span className={styles.uploadText}>
+                      {uploadingEdit ? "Uploading photos..." : "Choose photos from your computer"}
+                    </span>
+                    <span className={styles.uploadSubtext}>
+                      Supports JPG, PNG, and WebP (up to 10MB each)
+                    </span>
                   </div>
 
+                  {uploadingEdit && (
+                    <div className={styles.uploadingSpinner}>
+                      <span>⏳</span> Uploading and saving photos to persistent storage...
+                    </div>
+                  )}
+
+                  {uploadErrorEdit && (
+                    <div className={styles.errorAlert}>{uploadErrorEdit}</div>
+                  )}
+
                   {editImages.length > 0 && (
-                    <div className={styles.imageList}>
+                    <div className={styles.photoGrid}>
                       {editImages.map((url, idx) => (
-                        <div key={idx} className={styles.imageItem}>
-                          <span className={styles.imageIndexBadge}>
-                            {idx === 0 ? "Cover (Hero)" : `#${idx + 1}`}
-                          </span>
+                        <div
+                          key={`edit-img-${idx}`}
+                          className={`${styles.photoCard} ${idx === 0 ? styles.photoCardCover : ""}`}
+                        >
+                          {idx === 0 ? (
+                            <span className={styles.coverBadge}>★ Cover</span>
+                          ) : (
+                            <span className={styles.photoOrderBadge}>#{idx + 1}</span>
+                          )}
+
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={url}
-                            alt={`Preview ${idx + 1}`}
-                            className={styles.imageThumb}
+                            src={getImageUrl(url)}
+                            alt={`Photo ${idx + 1}`}
+                            className={styles.photoThumb}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
                                 "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=300";
                             }}
                           />
-                          <span className={styles.imageUrlText} title={url}>
-                            {url}
-                          </span>
-                          <button
-                            type="button"
-                            className={styles.imageRemoveBtn}
-                            onClick={() => handleRemoveEditImage(idx)}
-                            title="Remove Photo"
-                          >
-                            ✕
-                          </button>
+
+                          <div className={styles.photoControls}>
+                            <button
+                              type="button"
+                              className={styles.photoOrderBtn}
+                              disabled={idx === 0}
+                              onClick={() => handleMoveImage(idx, "left", true)}
+                              title="Move photo left (higher priority)"
+                            >
+                              ←
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.photoOrderBtn}
+                              disabled={idx === editImages.length - 1}
+                              onClick={() => handleMoveImage(idx, "right", true)}
+                              title="Move photo right"
+                            >
+                              →
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.photoDeleteBtn}
+                              onClick={() => handleRemoveEditImage(idx)}
+                              title="Remove photo"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
+
+                  <div style={{ marginTop: "10px" }}>
+                    <div className={styles.imageInputRow}>
+                      <input
+                        type="url"
+                        className={styles.formInput}
+                        placeholder="Or paste an image URL (e.g. Unsplash)..."
+                        value={editImageUrlInput}
+                        onChange={(e) => setEditImageUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddEditImage();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={styles.addImageBtn}
+                        onClick={handleAddEditImage}
+                      >
+                        + Add URL
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Edit Amenities Selection */}

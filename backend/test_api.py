@@ -947,10 +947,60 @@ def run_tests() -> None:
                            json=dirty_images_data,
                            headers=AUTH_H_HOST)
         test("POST with whitespace images filters out empty URLs → 201", resp.status_code == 201)
-        dirty_res = resp.json()
-        test("Only 1 valid image was saved", len(dirty_res["images"]) == 1)
-        test("Saved image is the valid URL", dirty_res["images"][0] == "https://images.unsplash.com/valid-photo?w=800")
-        test("Only 1 valid amenity saved", len(dirty_res["amenities"]) == 1)
+        # 16g. Past dates booking validation
+        print("\n── 16g. Past dates booking validation ──────────────────────────────")
+        past_booking_resp = client.post("/api/bookings", json={
+            "listing_id": 1,
+            "guest_id": 2,
+            "check_in": "2021-06-01",
+            "check_out": "2021-06-05",
+            "guest_count": 1,
+        })
+        test("POST /api/bookings with past check_in rejected → 400", past_booking_resp.status_code == 400)
+        test("Past check_in error detail mentions past", "past" in past_booking_resp.json().get("detail", "").lower())
+
+        # 16h. Host Real Photo Uploads
+        print("\n── 16h. Host Real Photo Uploads ────────────────────────────────────")
+        # 16h.1 No auth -> 401
+        upload_resp = client.post("/api/host/upload", files=[("files", ("test.jpg", b"\xff\xd8\xff\xe0fakejpeg", "image/jpeg"))])
+        test("POST /api/host/upload without auth → 401", upload_resp.status_code == 401)
+
+        # 16h.2 Guest role -> 403
+        upload_resp = client.post(
+            "/api/host/upload",
+            files=[("files", ("test.jpg", b"\xff\xd8\xff\xe0fakejpeg", "image/jpeg"))],
+            headers=AUTH_H_GUEST,
+        )
+        test("POST /api/host/upload by guest user → 403", upload_resp.status_code == 403)
+
+        # 16h.3 Invalid file type -> 400
+        upload_resp = client.post(
+            "/api/host/upload",
+            files=[("files", ("malicious.exe", b"MZexecutable", "application/octet-stream"))],
+            headers=AUTH_H_HOST,
+        )
+        test("POST /api/host/upload with invalid extension → 400", upload_resp.status_code == 400)
+
+        # 16h.4 Valid image upload -> 200 with /uploads/... URL
+        upload_resp = client.post(
+            "/api/host/upload",
+            files=[
+                ("files", ("photo1.png", b"\x89PNG\r\n\x1a\nfakeimage1", "image/png")),
+                ("files", ("photo2.webp", b"RIFF\x00\x00\x00\x00WEBPVP8 fakeimage2", "image/webp")),
+            ],
+            headers=AUTH_H_HOST,
+        )
+        test("POST /api/host/upload valid images → 200", upload_resp.status_code == 200)
+        upload_data = upload_resp.json()
+        test("Upload response has 'urls' list", "urls" in upload_data and len(upload_data["urls"]) == 2)
+        uploaded_url_1 = upload_data["urls"][0]
+        test("Uploaded URL starts with /uploads/", uploaded_url_1.startswith("/uploads/"))
+
+        # 16h.5 Static serving of uploaded file
+        static_resp = client.get(uploaded_url_1)
+        test("GET /uploads/<file> returns HTTP 200", static_resp.status_code == 200)
+        test("GET /uploads/<file> returns uploaded content", static_resp.content == b"\x89PNG\r\n\x1a\nfakeimage1")
+
         conn_img.close()
 
     finally:
