@@ -1,0 +1,338 @@
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+/* Filter Bar below Header matching Screenshot 1 */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #ebebeb;
+  position: sticky;
+  top: 80px;
+  background-color: #ffffff;
+  z-index: 20;
+}
+
+@media (max-width: 768px) {
+  .filterBar {
+    padding: 10px 16px;
+    overflow-x: auto;
+  }
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid #dddddd;
+  background-color: #ffffff;
+  color: #222222;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.filterBtn:hover {
+  border-color: #222222;
+}
+
+.filterBtnActive {
+  border-color: #222222;
+  background-color: #f7f7f7;
+}
+
+.filterBadge {
+  background-color: #222222;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 2px 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.caretIcon {
+  font-size: 0.75rem;
+  color: #717171;
+  transition: transform 0.2s ease;
+}
+
+.caretOpen {
+  transform: rotate(180deg);
+}
+
+/* Popovers for Filters */
+.popoverBackdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 40;
+}
+
+.filterPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  border: 1px solid #ebebeb;
+  padding: 20px;
+  width: 320px;
+  z-index: 50;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.popoverTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0 0 4px 0;
+}
+
+.popoverSubtitle {
+  font-size: 0.82rem;
+  color: #717171;
+  margin: 0 0 16px 0;
+}
+
+.priceInputsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.priceInputGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.priceLabel {
+  font-size: 0.75rem;
+  color: #717171;
+  font-weight: 500;
+}
+
+.priceInputField {
+  display: flex;
+  align-items: center;
+  border: 1px solid #b0b0b0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+}
+
+.currencySign {
+  color: #717171;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.priceInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.popoverFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #ebebeb;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: underline;
+  color: #222222;
+  cursor: pointer;
+}
+
+.applyBtn {
+  background: #222222;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.applyBtn:hover {
+  background: #000000;
+}
+
+/* Notice box for Type of Place */
+.noticeBox {
+  background-color: #f7f7f7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: #717171;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+
+/* Two-column Main Content Split Layout */
+.mainSplit {
+  display: grid;
+  grid-template-columns: minmax(450px, 1fr) minmax(450px, 1fr);
+  min-height: calc(100vh - 140px);
+  flex: 1;
+}
+
+@media (max-width: 1024px) {
+  .mainSplit {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left Results Column */
+.resultsColumn {
+  padding: 24px 24px 40px 24px;
+  overflow-y: auto;
+  max-width: 900px;
+}
+
+@media (max-width: 768px) {
+  .resultsColumn {
+    padding: 16px 16px 30px 16px;
+  }
+}
+
+.resultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+}
+
+.resultsCountTitle {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+}
+
+.priceTagBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: #222222;
+  font-weight: 500;
+}
+
+.priceTagIcon {
+  width: 18px;
+  height: 18px;
+  fill: #e61e4d;
+}
+
+/* Listings Grid */
+.listingsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .twoColumnGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Right Map Column */
+.mapColumn {
+  height: calc(100vh - 140px);
+  position: sticky;
+  top: 140px;
+}
+
+@media (max-width: 1024px) {
+  .mapColumn {
+    display: none;
+  }
+  .mapColumnVisibleMobile {
+    display: block;
+    position: fixed;
+    inset: 140px 0 0 0;
+    height: auto;
+    z-index: 30;
+  }
+}
+
+/* Mobile Toggle Map/List floating pill button */
+.mobileMapToggle {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobileMapToggle {
+    display: flex;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222222;
+    color: #ffffff;
+    border: none;
+    border-radius: 28px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 60;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Loading & Empty states */
+.stateBox {
+  padding: 60px 20px;
+  text-align: center;
+  color: #717171;
+}
+
+.stateIcon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}

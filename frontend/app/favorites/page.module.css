@@ -1,0 +1,141 @@
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.container {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+  flex: 1;
+}
+
+.headerRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: #717171;
+  margin-top: 0.25rem;
+}
+
+.currentUserBadge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #717171;
+  background-color: #f7f7f7;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem 1.5rem;
+}
+
+.emptyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 1rem;
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  color: #ff385c;
+  margin-bottom: 1.5rem;
+  opacity: 0.85;
+}
+
+.emptyTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0 0 0.75rem;
+}
+
+.emptyText {
+  font-size: 1rem;
+  color: #717171;
+  line-height: 1.5;
+  margin: 0 0 2rem;
+}
+
+.exploreBtn {
+  display: inline-block;
+  background: #222222;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.exploreBtn:hover {
+  background: #000000;
+  transform: translateY(-1px);
+}
+
+.loadingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem 1.5rem;
+}
+
+.skeletonCard {
+  background-color: #f0f0f0;
+  border-radius: 12px;
+  height: 320px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

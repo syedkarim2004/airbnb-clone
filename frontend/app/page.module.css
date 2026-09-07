@@ -1,0 +1,291 @@
+.pageLayout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+/* Top Search Area when unscrolled */
+.topSearchContainer {
+  background-color: #ffffff;
+  border-bottom: 1px solid #ebebeb;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  opacity: 1;
+}
+
+.topSearchContainerScrolled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Category Row Container: Sticky below 80px Header */
+.categoryStickyRow {
+  position: sticky;
+  top: 80px;
+  z-index: 85;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ebebeb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.mainContent {
+  flex: 1;
+  max-width: 1760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 3rem 4rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.75rem;
+}
+
+/* Subtle, fast tab transition */
+.tabContent {
+  animation: tabFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0.2;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Horizontal Section Header (from Screenshot 3) */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #222222;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.sectionTitle:hover {
+  text-decoration: underline;
+}
+
+.titleArrowCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #f2f2f2;
+  font-size: 0.95rem;
+  color: #222222;
+  margin-left: 0.25rem;
+  transition: background-color 0.15s;
+}
+
+.sectionTitle:hover .titleArrowCircle {
+  background-color: #e5e5e5;
+}
+
+.arrowRight {
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scrollNavBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #dcdcdc;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #222222;
+  transition: all 0.15s ease;
+}
+
+.scrollNavBtn:hover:not(.scrollNavBtnDisabled) {
+  border-color: #222222;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scrollNavBtnDisabled {
+  opacity: 0.35;
+  cursor: default;
+  border-color: #ebebeb;
+}
+
+/* Horizontal Scrollable Row for Listings */
+.horizontalListingsRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding-bottom: 0.5rem;
+}
+
+.horizontalListingsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.cardWrapper {
+  flex: 0 0 calc((100% - 6 * 0.75rem) / 7);
+  min-width: 175px;
+}
+
+/* Skeleton Loading State */
+.skeletonCard {
+  flex: 0 0 calc((100% - 6 * 0.85rem) / 7);
+  min-width: 175px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeletonImage {
+  width: 100%;
+  aspect-ratio: 20 / 19;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonLine {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonLineShort {
+  width: 60%;
+}
+
+.skeletonLineLong {
+  width: 90%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Error State */
+.stateContainer {
+  padding: 4rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 480px;
+  margin: 2rem auto;
+}
+
+.errorIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.stateTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #222222;
+  margin-bottom: 0.5rem;
+}
+
+.stateText {
+  font-size: 0.95rem;
+  color: #717171;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.retryBtn {
+  background-color: #ff385c;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.retryBtn:hover {
+  background-color: #e00b41;
+}
+
+/* Empty State */
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 1400px) {
+  .cardWrapper,
+  .skeletonCard {
+    flex: 0 0 calc((100% - 5 * 0.85rem) / 6);
+    min-width: 170px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .cardWrapper,
+  .skeletonCard {
+    flex: 0 0 calc((100% - 3 * 0.85rem) / 4);
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 1.25rem 1.25rem 3rem 1.25rem;
+    gap: 2rem;
+  }
+
+  .cardWrapper,
+  .skeletonCard {
+    flex: 0 0 calc((100% - 2 * 0.75rem) / 3);
+    min-width: 150px;
+  }
+
+  .sectionTitle {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 550px) {
+  .cardWrapper,
+  .skeletonCard {
+    flex: 0 0 calc(50% - 0.5rem);
+    min-width: 140px;
+  }
+}

@@ -1,0 +1,193 @@
+.footer {
+  background-color: #f7f7f7;
+  border-top: 1px solid #ebebeb;
+  margin-top: auto;
+  font-size: 0.875rem;
+  color: #222222;
+}
+
+.container {
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: 3rem 3rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Inspiration for future getaways */
+.inspirationSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  border-bottom: 1px solid #dddddd;
+  padding-bottom: 2.5rem;
+}
+
+.inspirationHeading {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #222222;
+}
+
+.inspirationTabs {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border-bottom: 1px solid #ebebeb;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.inspirationTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.inspTabBtn {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #717171;
+  padding: 0.5rem 0 0.85rem 0;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  transition: color 0.15s;
+}
+
+.inspTabBtn:hover {
+  color: #222222;
+}
+
+.inspTabBtnActive {
+  font-weight: 600;
+  color: #222222;
+}
+
+.inspTabBtnActive::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #222222;
+}
+
+.destinationsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1.5rem 1rem;
+}
+
+.destColItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.destColCity {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #222222;
+}
+
+.destColType {
+  font-size: 0.8rem;
+  color: #717171;
+}
+
+/* 3-Column Footer Links: Support, Hosting, Airbnb */
+.linksColumns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  border-bottom: 1px solid #dddddd;
+  padding-bottom: 2.5rem;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.columnHeading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222222;
+  margin-bottom: 0.25rem;
+}
+
+.footerLink {
+  color: #222222;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: text-decoration 0.15s;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+/* Bottom Row */
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.bottomLeft {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: #222222;
+}
+
+.dot {
+  color: #717171;
+}
+
+.bottomRight {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-weight: 600;
+  color: #222222;
+}
+
+.localeItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .destinationsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .destinationsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .linksColumns {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .bottomRow {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+  }
+}

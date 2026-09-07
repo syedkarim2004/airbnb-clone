@@ -1,0 +1,1149 @@
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  color: #222222;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.detailContainer {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 24px 80px 24px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .detailContainer {
+    padding: 16px 16px 60px 16px;
+  }
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #222222;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  margin-bottom: 24px;
+  transition: color 0.15s ease;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+  color: #000000;
+}
+
+/* ── MAIN TWO-COLUMN LAYOUT (Matches Airbnb Reference Screenshots) ── */
+.experienceLayout {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+  position: relative;
+}
+
+@media (max-width: 1024px) {
+  .experienceLayout {
+    grid-template-columns: 340px 1fr;
+    gap: 36px;
+  }
+}
+
+@media (max-width: 860px) {
+  .experienceLayout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+/* ── LEFT PROFILE COLUMN (Sticky on desktop matching reference) ── */
+.leftProfileColumn {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 10;
+}
+
+@media (max-width: 860px) {
+  .leftProfileColumn {
+    position: static;
+    top: auto;
+  }
+}
+
+/* Hero Image Container */
+.heroImgWrapper {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 18px;
+  overflow: hidden;
+  background-color: #f3f3f3;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  position: relative;
+  cursor: pointer;
+}
+
+.heroImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.heroImgWrapper:hover .heroImg {
+  transform: scale(1.02);
+}
+
+/* Circular Host Avatar Overlapping Bottom of Hero Image */
+.avatarOverlapWrapper {
+  position: relative;
+  margin-top: -38px;
+  margin-bottom: 14px;
+  z-index: 3;
+}
+
+.avatarCircleImg {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 3.5px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  background-color: #ffffff;
+}
+
+/* Experience Title */
+.profileTitle {
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 1.24;
+  color: #222222;
+  margin: 0 0 12px 0;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* Host Description / Personal Statement */
+.profileDescription {
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #484848;
+  margin: 0 0 16px 0;
+  text-align: center;
+  max-width: 360px;
+}
+
+/* Rating and Category Subheading */
+.profileRatingLine {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.profileLocationText {
+  font-size: 0.88rem;
+  color: #717171;
+  margin-bottom: 16px;
+}
+
+/* Share & Save Icon Controls */
+.shareSaveRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.iconControlBtn {
+  background: transparent;
+  border: 1px solid #dddddd;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #222222;
+  transition: all 0.15s ease;
+}
+
+.iconControlBtn:hover {
+  border-color: #222222;
+  transform: scale(1.05);
+}
+
+.iconControlBtnActive {
+  color: #e00b41;
+  border-color: #e00b41;
+}
+
+/* ── PERSISTENT BOOKING CARD (White Rounded Box matching reference) ── */
+.bookingCardWrapper {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #e2e2e2;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  padding: 18px 20px;
+  text-align: left;
+  transition: box-shadow 0.2s ease;
+}
+
+.bookingCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.bookingPriceBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.bookingPriceText {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #222222;
+}
+
+.bookingPriceUnit {
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: #717171;
+}
+
+.freeCancelLabel {
+  font-size: 0.82rem;
+  color: #008a05;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.showDatesButton {
+  background-color: #e00b41;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 12px 22px;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.showDatesButton:hover {
+  background-color: #d70438;
+  transform: scale(1.02);
+}
+
+/* Expandable Availability Drawer inside Booking Card */
+.availabilityDrawer {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #eeeeee;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.drawerHeading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 10px;
+}
+
+.slotList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.slotItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  background-color: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.slotItem:hover {
+  border-color: #222222;
+  background-color: #f9f9f9;
+}
+
+.slotItemActive {
+  border-color: #222222;
+  background-color: #f7f7f7;
+  outline: 2px solid #222222;
+}
+
+.slotDateText {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+}
+
+.slotTimeText {
+  font-size: 0.8rem;
+  color: #717171;
+  margin: 2px 0 0 0;
+}
+
+.slotBadge {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #717171;
+  background-color: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.guestPickerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 8px 0;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.guestPickerLabel {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #222222;
+}
+
+.guestControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.guestStepBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.guestStepBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.guestStepBtn:hover:not(:disabled) {
+  border-color: #222222;
+}
+
+.guestCountText {
+  font-size: 0.92rem;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #222222;
+  margin-bottom: 14px;
+}
+
+.reserveBtn {
+  width: 100%;
+  background-color: #e00b41;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 13px 0;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.reserveBtn:hover {
+  background-color: #c70332;
+}
+
+/* ── RIGHT CONTENT COLUMN (Natural Scroll) ── */
+.rightContentColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.sectionDivider {
+  height: 1px;
+  background-color: #ebebeb;
+  margin: 32px 0;
+  width: 100%;
+}
+
+/* ── SECTION 1: REVIEWS ── */
+.reviewsSectionHeading {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 24px 0;
+}
+
+.reviewsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 640px) {
+  .reviewsGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.reviewerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #eeeeee;
+}
+
+.reviewerMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewerName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+}
+
+.reviewerLocation {
+  font-size: 0.82rem;
+  color: #717171;
+  margin: 2px 0 0 0;
+}
+
+.reviewStarsDate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #222222;
+  margin-bottom: 8px;
+}
+
+.starsBlack {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+.reviewDateMuted {
+  color: #717171;
+}
+
+.reviewComment {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #222222;
+  margin: 0 0 6px 0;
+}
+
+.showMoreLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222222;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.showAllReviewsBtn {
+  width: 100%;
+  padding: 13px 0;
+  border-radius: 10px;
+  border: 1px solid #222222;
+  background-color: #ffffff;
+  color: #222222;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  margin-bottom: 16px;
+}
+
+.showAllReviewsBtn:hover {
+  background-color: #f7f7f7;
+}
+
+.reviewsFooterNotes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #717171;
+}
+
+.reviewsFooterNotes a {
+  color: #222222;
+  text-decoration: underline;
+}
+
+.autoTranslateNotice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── SECTION 2: MY QUALIFICATIONS ── */
+.qualificationsHeading {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 20px 0;
+}
+
+.qualificationsLayout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .qualificationsLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hostProfileCard {
+  background-color: #ffffff;
+  border: 1px solid #ebebeb;
+  border-radius: 18px;
+  padding: 22px 18px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hostCardAvatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.hostCardName {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 4px 0;
+}
+
+.hostCardTitle {
+  font-size: 0.92rem;
+  color: #717171;
+  margin: 0 0 16px 0;
+}
+
+.messageHostBtn {
+  width: 100%;
+  padding: 11px 0;
+  border-radius: 8px;
+  border: 1px solid #dddddd;
+  background-color: #f7f7f7;
+  color: #222222;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 12px;
+}
+
+.messageHostBtn:hover {
+  background-color: #eeeeee;
+  border-color: #222222;
+}
+
+.paymentProtectionNotice {
+  font-size: 0.74rem;
+  color: #717171;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.qualificationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 4px;
+}
+
+.qualificationItem {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.qualificationIconBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #f7f7f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #222222;
+  flex-shrink: 0;
+}
+
+.qualificationTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0 0 3px 0;
+}
+
+.qualificationDesc {
+  font-size: 0.9rem;
+  color: #717171;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── SECTION: RELATED OFFERINGS ── */
+.relatedOfferingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.relatedOfferingCard {
+  border: 1px solid #ebebeb;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.relatedOfferingCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.relatedOfferingImg {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  display: block;
+}
+
+.relatedOfferingContent {
+  padding: 12px;
+}
+
+.relatedOfferingTitle {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0 0 4px 0;
+  line-height: 1.25;
+}
+
+.relatedOfferingPrice {
+  font-size: 0.85rem;
+  color: #717171;
+  margin: 0;
+}
+
+/* ── SECTION 3: MY PORTFOLIO (Matches Screenshot 3) ── */
+.portfolioHeading {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 16px 0;
+}
+
+.portfolioContainer {
+  display: grid;
+  grid-template-columns: 1.25fr minmax(0, 1fr);
+  gap: 10px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  height: 380px;
+}
+
+@media (max-width: 640px) {
+  .portfolioContainer {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+.primaryPortfolioImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+  border-radius: 14px 0 0 14px;
+}
+
+@media (max-width: 640px) {
+  .primaryPortfolioImage {
+    border-radius: 14px;
+    height: 280px;
+  }
+}
+
+.primaryPortfolioImage:hover {
+  transform: scale(1.02);
+}
+
+.portfolioThumbnailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 8px;
+  height: 100%;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .portfolioThumbnailsGrid {
+    display: none;
+  }
+}
+
+.portfolioThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.portfolioThumbImg:hover {
+  transform: scale(1.04);
+  filter: brightness(0.95);
+}
+
+.showAllPhotosBadgeBtn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background-color: #ffffff;
+  color: #222222;
+  border: 1px solid #222222;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s ease;
+  z-index: 5;
+}
+
+.showAllPhotosBadgeBtn:hover {
+  transform: scale(1.04);
+}
+
+/* ── SECTION 4: "I'LL COME TO YOU" (Matches Screenshots 3 & 5) ── */
+.comeToYouHeading {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 8px 0;
+}
+
+.comeToYouSubtext {
+  font-size: 0.94rem;
+  color: #484848;
+  margin: 0 0 16px 0;
+  line-height: 1.45;
+}
+
+.serviceMapCard {
+  width: 100%;
+  height: 340px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  background-color: #e5ecd6;
+  border: 1px solid #e0e0e0;
+}
+
+.mapControlsTopRight {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+}
+
+.mapIconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mapZoomControls {
+  position: absolute;
+  right: 14px;
+  top: 60px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #cccccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 5;
+}
+
+.zoomBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoomBtn:first-child {
+  border-bottom: 1px solid #eeeeee;
+}
+
+.mapFooterBar {
+  position: absolute;
+  bottom: 6px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #555555;
+  pointer-events: none;
+}
+
+/* ── SECTION 5: THINGS TO KNOW (Matches Screenshot 5) ── */
+.thingsHeading {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 20px 0;
+}
+
+.thingsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.thingItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thingIcon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  color: #222222;
+}
+
+.thingTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+}
+
+.thingDesc {
+  font-size: 0.9rem;
+  color: #717171;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── SECTION 6: MORE EXPERIENCES (Bottom Carousel) ── */
+.moreSection {
+  margin-top: 48px;
+}
+
+.moreHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.moreTitle {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0;
+}
+
+.moreCardsRow {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 14px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.moreCardsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselNav {
+  display: flex;
+  gap: 8px;
+}
+
+.carouselNavBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #cccccc;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.15s ease;
+}
+
+.carouselNavBtn:hover {
+  border-color: #222222;
+  transform: scale(1.05);
+}
+
+/* ── MODALS (Lightbox, Message, Reviews, Confirmation) ── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.lightboxContent {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lightboxImage {
+  max-width: 85vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.lightboxCloseBtn {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.lightboxNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.25);
+  border: none;
+  color: #ffffff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.lightboxNavBtn:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.lightboxPrev {
+  left: -60px;
+}
+
+.lightboxNext {
+  right: -60px;
+}
+
+.lightboxCounter {
+  color: #ffffff;
+  font-size: 0.95rem;
+  margin-top: 14px;
+}
+
+/* Message Modal */
+.dialogCard {
+  background: #ffffff;
+  border-radius: 18px;
+  max-width: 520px;
+  width: 100%;
+  padding: 28px;
+  position: relative;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+}
+
+.dialogTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: #222222;
+}
+
+.dialogCloseBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #717171;
+}
+
+.messageTextarea {
+  width: 100%;
+  height: 120px;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 16px;
+}
+
+.dialogSubmitBtn {
+  background-color: #e00b41;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}

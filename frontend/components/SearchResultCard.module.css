@@ -1,0 +1,243 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 14px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Featured / Wide Card layout matching Screenshot 1 top card */
+.featuredCard {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.25rem;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+@media (max-width: 640px) {
+  .featuredCard {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Media Carousel Container */
+.mediaContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 20 / 19;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.featuredCard .mediaContainer {
+  aspect-ratio: 4 / 3;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.noImage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #717171;
+  font-size: 0.85rem;
+}
+
+/* Guest Favourite Badge */
+.guestFavouriteBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #222222;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+/* Favorite Heart Button */
+.heartButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.heartButton:hover {
+  transform: scale(1.12);
+}
+
+.heartIcon {
+  width: 24px;
+  height: 24px;
+  stroke: #ffffff;
+  stroke-width: 2;
+  fill: rgba(0, 0, 0, 0.45);
+  transition: fill 0.15s ease, stroke 0.15s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.heartActive {
+  fill: #ff385c !important;
+  stroke: #ff385c !important;
+}
+
+/* Carousel Arrow Navigation */
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #222222;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.1s ease, background-color 0.15s ease;
+}
+
+.mediaContainer:hover .carouselArrow {
+  opacity: 1;
+}
+
+.carouselArrow:hover {
+  background-color: #ffffff;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.prevArrow {
+  left: 8px;
+}
+
+.nextArrow {
+  right: 8px;
+}
+
+/* Pagination Dots */
+.dotsContainer {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 6;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  transition: all 0.2s ease;
+}
+
+.activeDot {
+  background-color: #ffffff;
+  transform: scale(1.25);
+}
+
+/* Card Content Details */
+.details {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0.65rem;
+  gap: 0.25rem;
+}
+
+.featuredCard .details {
+  padding-top: 0.25rem;
+  justify-content: center;
+}
+
+.categorySubtitle {
+  font-size: 0.88rem;
+  color: #717171;
+  font-weight: 400;
+  margin: 0;
+}
+
+.title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.specsLine {
+  font-size: 0.86rem;
+  color: #717171;
+  margin: 0;
+}
+
+.datesLine {
+  font-size: 0.86rem;
+  color: #717171;
+  margin: 0;
+}
+
+.bottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 0.35rem;
+}
+
+.price {
+  font-size: 0.95rem;
+  color: #222222;
+}
+
+.price strong {
+  font-weight: 600;
+}
+
+.rating {
+  font-size: 0.88rem;
+  color: #222222;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}

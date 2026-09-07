@@ -1,0 +1,111 @@
+.compactPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  height: 48px;
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 30px;
+  padding: 0 0.45rem 0 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  font-size: 0.875rem;
+  color: #222222;
+  user-select: none;
+  max-width: 420px;
+  white-space: nowrap;
+}
+
+.compactPill:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.compactPill:active {
+  transform: scale(0.98);
+}
+
+.tabIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.tabIconWrapper svg {
+  width: 100%;
+  height: 100%;
+}
+
+.itemBold {
+  font-weight: 600;
+  color: #222222;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemMuted {
+  font-weight: 400;
+  color: #717171;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background-color: #dddddd;
+  flex-shrink: 0;
+}
+
+/* Circular Coral Search Icon Button */
+.searchCircle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #ff385c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+  margin-left: 0.25rem;
+  transition: background-color 0.15s ease;
+}
+
+.compactPill:hover .searchCircle {
+  background-color: #e00b41;
+}
+
+.searchIcon {
+  width: 14px;
+  height: 14px;
+  stroke: #ffffff;
+  stroke-width: 3.2;
+  fill: none;
+}
+
+@media (max-width: 640px) {
+  .compactPill {
+    padding: 0 0.35rem 0 0.75rem;
+    gap: 0.4rem;
+    max-width: 240px;
+  }
+
+  .itemBold {
+    max-width: 65px;
+    font-size: 0.8rem;
+  }
+
+  .itemMuted {
+    display: none;
+  }
+
+  .divider:last-of-type {
+    display: none;
+  }
+}

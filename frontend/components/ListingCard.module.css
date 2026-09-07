@@ -1,0 +1,181 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+/* Image Carousel Container */
+.mediaContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 20 / 19;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+.noImage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #717171;
+  font-size: 0.85rem;
+}
+
+/* Guest Favourite Badge */
+.guestFavouriteBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 6;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #222222;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+/* Favorite Heart Button */
+.heartButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.heartButton:hover {
+  transform: scale(1.12);
+}
+
+.heartIcon {
+  width: 24px;
+  height: 24px;
+  stroke: #ffffff;
+  stroke-width: 2;
+  fill: rgba(0, 0, 0, 0.45);
+  transition: fill 0.15s ease, stroke 0.15s ease;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.heartActive {
+  fill: #ff385c !important;
+  stroke: #ff385c !important;
+}
+
+/* Carousel Arrow Navigation */
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #222222;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.1s ease, background-color 0.15s ease;
+}
+
+.mediaContainer:hover .carouselArrow {
+  opacity: 1;
+}
+
+.carouselArrow:hover {
+  background-color: #ffffff;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.prevArrow {
+  left: 8px;
+}
+
+.nextArrow {
+  right: 8px;
+}
+
+/* Carousel Pagination Dots (Hidden by default to match clean reference screenshot) */
+.dotsContainer {
+  display: none;
+}
+
+/* Details Section */
+.details {
+  padding-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: #717171;
+  line-height: 1.25;
+}
+
+.priceText {
+  color: #222222;
+  font-weight: 400;
+}
+
+.priceText strong {
+  font-weight: 600;
+}
+
+.dotSeparator {
+  color: #717171;
+  font-size: 0.85rem;
+}
+
+.ratingText {
+  color: #222222;
+  font-weight: 400;
+  white-space: nowrap;
+}

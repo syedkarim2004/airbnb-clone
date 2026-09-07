@@ -1,0 +1,109 @@
+.categoryWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: 0.5rem 3rem;
+  background-color: #ffffff;
+}
+
+.scrollContainer {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  padding: 0.5rem 0.25rem 0.75rem 0.25rem;
+  width: 100%;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.categoryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #717171;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.categoryItem:hover {
+  color: #222222;
+  border-bottom-color: #dddddd;
+}
+
+.categoryItemActive {
+  color: #222222;
+  border-bottom-color: #222222;
+  font-weight: 600;
+}
+
+.categoryIcon {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.categoryLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+/* Scroll Arrows */
+.arrowButton {
+  position: absolute;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #dddddd;
+  background-color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #222222;
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.arrowButton:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transform: scale(1.04);
+}
+
+.leftArrow {
+  left: 0.5rem;
+}
+
+.rightArrow {
+  right: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .categoryWrapper {
+    padding: 0.25rem 1rem;
+  }
+
+  .scrollContainer {
+    gap: 1.5rem;
+  }
+
+  .arrowButton {
+    display: none;
+  }
+}
