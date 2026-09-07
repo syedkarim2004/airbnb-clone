@@ -405,8 +405,9 @@ cd frontend && npm run lint
 
 ---
 
-## 16. Deployment
+## 16. Deployment & CI/CD
 
-- **Frontend Deployment (Vercel):** *TODO: Add hosted Vercel link upon deployment*
-- **Backend Deployment (Render / Railway / Cloud Run):** *TODO: Add hosted API link upon deployment*
-- **Public GitHub Repository:** *TODO: Add public GitHub link*
+- **Frontend Deployment (Vercel):** https://airbnb-clone-vert-chi.vercel.app
+- **Backend Deployment (Railway):** https://airbnb-clone-backend-production-5504.up.railway.app
+- **CI/CD Pipeline (GitHub Actions):** Continuous Integration runs automated backend test suites (database, booking logic, API integration) and frontend validation (TypeScript compilation, ESLint, Next.js production build) on every push to `main`. Railway is configured with "Wait for CI" to ensure backend deployments only trigger after all GitHub Actions checks pass.
+
