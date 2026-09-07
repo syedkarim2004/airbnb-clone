@@ -15,8 +15,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS: allow the Next.js frontend (local dev and deployed origins)
-# ALLOWED_ORIGINS / FRONTEND_URL environment variables allow configuring deployed URLs.
+# CORS: allow the Next.js frontend (local dev and deployed origins).
+# Exact origins are read from environment variables:
+#   ALLOWED_ORIGINS  – comma-separated list of allowed origins
+#   FRONTEND_URL     – single deployed frontend origin (Vercel production URL)
+# Additionally, all *.vercel.app subdomains are allowed via regex so that
+# Vercel preview deployments work without manual env-var updates.
 _allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "")
 _allowed_origins = [o.strip() for o in _allowed_origins_env.split(",") if o.strip()]
 if not _allowed_origins:
@@ -28,9 +32,14 @@ _frontend_url = os.environ.get("FRONTEND_URL", "").strip()
 if _frontend_url and _frontend_url not in _allowed_origins:
     _allowed_origins.append(_frontend_url)
 
+# Regex covers all Vercel deployment URLs (production + previews) without
+# needing per-deployment env-var changes.
+_allow_origin_regex = r"https://.*\.vercel\.app"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=_allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
