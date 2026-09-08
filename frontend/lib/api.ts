@@ -70,6 +70,7 @@ async function fetchJson<T>(
   }
 
   const response = await fetch(url, {
+    cache: "no-store",
     ...options,
     headers,
   });

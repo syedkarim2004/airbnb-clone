@@ -31,14 +31,31 @@ const DEFAULT_AMENITY_NAMES = [
   "Dedicated Workspace",
 ];
 
+function formatReservationDate(dateStr: string): string {
+  try {
+    const parts = dateStr.split("-").map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return dateStr;
+    const [y, m, d] = parts;
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function HostDashboardPage() {
-  const { currentUser, isHost, switchUserById } = useAuth();
+  const { currentUser, isHost, switchUserById, allUsers, isLoaded } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"listings" | "reservations">("listings");
   const [listings, setListings] = useState<HostListing[]>([]);
   const [bookings, setBookings] = useState<HostBooking[]>([]);
   const [availableAmenities, setAvailableAmenities] = useState<string[]>(DEFAULT_AMENITY_NAMES);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -91,41 +108,60 @@ export default function HostDashboardPage() {
       });
   }, []);
 
-  const fetchHostData = useCallback(async () => {
-    if (!currentUser || !isHost) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [listingsData, bookingsData] = await Promise.all([
-        getHostListings(currentUser.id),
-        getHostBookings(currentUser.id),
-      ]);
-      setListings(listingsData);
-      setBookings(bookingsData);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load host data");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser, isHost]);
+  const fetchHostData = useCallback(
+    async (isManualRefresh = false) => {
+      if (!currentUser || !isHost) {
+        setLoading(false);
+        return;
+      }
+      if (isManualRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+      try {
+        const [listingsData, bookingsData] = await Promise.all([
+          getHostListings(currentUser.id),
+          getHostBookings(currentUser.id),
+        ]);
+        setListings(listingsData);
+        setBookings(bookingsData);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Failed to load host data");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [currentUser, isHost]
+  );
 
   useEffect(() => {
-    fetchHostData();
-  }, [fetchHostData]);
+    if (isLoaded) {
+      fetchHostData();
+    }
+  }, [fetchHostData, isLoaded]);
 
-  // Derived metrics
+  // Derived metrics from real API database responses
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
   const totalListings = listings.length;
   const activeListings = useMemo(
     () => listings.filter((l) => l.is_active).length,
     [listings]
   );
-  const totalBookingsCount = useMemo(
-    () => listings.reduce((sum, l) => sum + (l.booking_count || 0), 0),
-    [listings]
+  const totalBookingsCount = bookings.length;
+  const upcomingBookings = useMemo(
+    () =>
+      bookings
+        .filter((b) => b.check_in >= todayStr)
+        .sort((a, b) => a.check_in.localeCompare(b.check_in)),
+    [bookings, todayStr]
   );
+  const upcomingStaysCount = upcomingBookings.length;
   const totalRevenueSum = useMemo(
-    () => listings.reduce((sum, l) => sum + (l.total_revenue || 0), 0),
-    [listings]
+    () => bookings.reduce((sum, b) => sum + Number(b.total_price || 0), 0),
+    [bookings]
   );
 
   // Deactivate listing (Soft Delete)
@@ -133,9 +169,7 @@ export default function HostDashboardPage() {
     if (!currentUser) return;
     try {
       await deleteHostListing(currentUser.id, listingId);
-      setListings((prev) =>
-        prev.map((l) => (l.id === listingId ? { ...l, is_active: false } : l))
-      );
+      await fetchHostData();
       setSuccessMessage(`Listing #${listingId} deactivated. It is now hidden from public search.`);
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: unknown) {
@@ -148,9 +182,7 @@ export default function HostDashboardPage() {
     if (!currentUser) return;
     try {
       await reactivateHostListing(currentUser.id, listingId);
-      setListings((prev) =>
-        prev.map((l) => (l.id === listingId ? { ...l, is_active: true } : l))
-      );
+      await fetchHostData();
       setSuccessMessage(`Listing #${listingId} reactivated and visible in public searches!`);
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: unknown) {
@@ -273,14 +305,12 @@ export default function HostDashboardPage() {
     };
 
     try {
-      const updated = await updateHostListing(
+      await updateHostListing(
         currentUser.id,
         editModalListing.id,
         patchPayload
       );
-      setListings((prev) =>
-        prev.map((l) => (l.id === editModalListing.id ? { ...l, ...updated } : l))
-      );
+      await fetchHostData();
       setEditModalListing(null);
       setSuccessMessage("Listing details updated successfully!");
       setTimeout(() => setSuccessMessage(null), 4000);
@@ -311,8 +341,8 @@ export default function HostDashboardPage() {
     };
 
     try {
-      const created = await createHostListing(currentUser.id, payload);
-      setListings((prev) => [created, ...prev]);
+      await createHostListing(currentUser.id, payload);
+      await fetchHostData();
       setCreateModalOpen(false);
       // Reset form
       setNewTitle("");
@@ -340,8 +370,10 @@ export default function HostDashboardPage() {
       />
 
       <main className={styles.container}>
-        {/* Role Access Check */}
-        {!isHost ? (
+        {/* Hydration / Role Access Check */}
+        {!isLoaded ? (
+          <div className={styles.emptyBox}>Loading host account...</div>
+        ) : !isHost ? (
           <div className={styles.restrictedBox}>
             <h2 className={styles.restrictedTitle}>Host Privileges Required</h2>
             <p className={styles.restrictedText}>
@@ -353,20 +385,18 @@ export default function HostDashboardPage() {
               Switch to a pre-seeded host user to test host dashboard features:
             </p>
             <div className={styles.hostSwitcherRow}>
-              <button
-                type="button"
-                className={styles.switchHostBtn}
-                onClick={() => switchUserById(1)}
-              >
-                Switch to Alice Martin (Host)
-              </button>
-              <button
-                type="button"
-                className={styles.switchHostBtn}
-                onClick={() => switchUserById(4)}
-              >
-                Switch to David Wilson (Both)
-              </button>
+              {allUsers
+                .filter((u) => u.role === "host" || u.role === "both")
+                .map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className={styles.switchHostBtn}
+                    onClick={() => switchUserById(u.id)}
+                  >
+                    Switch to {u.name} ({u.role})
+                  </button>
+                ))}
             </div>
           </div>
         ) : (
@@ -380,13 +410,24 @@ export default function HostDashboardPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                className={styles.createBtn}
-                onClick={() => setCreateModalOpen(true)}
-              >
-                <span>+</span> Create New Listing
-              </button>
+              <div className={styles.headerActions}>
+                <button
+                  type="button"
+                  className={styles.refreshBtn}
+                  onClick={() => fetchHostData(true)}
+                  disabled={loading || refreshing}
+                  title="Fetch fresh data from database"
+                >
+                  <span className={refreshing ? styles.refreshSpinner : ""}>↻</span> Refresh
+                </button>
+                <button
+                  type="button"
+                  className={styles.createBtn}
+                  onClick={() => setCreateModalOpen(true)}
+                >
+                  <span>+</span> Create New Listing
+                </button>
+              </div>
             </div>
 
             {successMessage && (
@@ -408,10 +449,123 @@ export default function HostDashboardPage() {
                 <span className={styles.metricValue}>{totalBookingsCount}</span>
               </div>
               <div className={styles.metricCard}>
+                <span className={styles.metricLabel}>Upcoming Stays</span>
+                <span className={styles.metricValue}>{upcomingStaysCount}</span>
+              </div>
+              <div className={styles.metricCard}>
                 <span className={styles.metricLabel}>Total Gross Revenue</span>
                 <span className={styles.metricValue}>${totalRevenueSum.toFixed(2)}</span>
               </div>
             </div>
+
+            {/* Upcoming Reservations Overview Section */}
+            <section className={styles.upcomingSection} aria-label="Upcoming reservations">
+              <div className={styles.sectionHeaderRow}>
+                <div>
+                  <h2 className={styles.sectionHeading}>Upcoming Reservations</h2>
+                  <p className={styles.sectionSubheading}>
+                    Confirmed future guest arrivals for your properties
+                  </p>
+                </div>
+                {upcomingBookings.length > 0 && (
+                  <span className={styles.upcomingCountBadge}>
+                    {upcomingBookings.length} upcoming
+                  </span>
+                )}
+              </div>
+
+              {loading ? (
+                <div className={styles.noUpcomingBox}>Loading reservations...</div>
+              ) : upcomingBookings.length === 0 ? (
+                <div className={styles.noUpcomingBox}>
+                  <span className={styles.calendarEmptyIcon}>📅</span>
+                  <p className={styles.noUpcomingText}>No upcoming reservations at this time.</p>
+                </div>
+              ) : (
+                <div className={styles.upcomingCardsGrid}>
+                  {upcomingBookings.map((b) => {
+                    const listing = listings.find((l) => l.id === b.listing_id);
+                    const coverImage =
+                      listing?.images && listing.images.length > 0
+                        ? listing.images[0]
+                        : null;
+                    const locationText = listing
+                      ? `${listing.city}, ${listing.country}`
+                      : "";
+
+                    return (
+                      <div key={`upcoming-${b.id}`} className={styles.reservationCard}>
+                        <div className={styles.reservationCardHeader}>
+                          <div className={styles.reservationThumbWrapper}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={
+                                coverImage
+                                  ? getImageUrl(coverImage)
+                                  : "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80"
+                              }
+                              alt={b.listing_title}
+                              className={styles.reservationThumb}
+                            />
+                          </div>
+                          <div className={styles.reservationMainInfo}>
+                            <div className={styles.reservationBadgeRow}>
+                              <span className={styles.badgeConfirmed}>Confirmed</span>
+                              <span className={styles.reservationCode}>#BK-{b.id}</span>
+                            </div>
+                            <h3 className={styles.reservationListingTitle}>
+                              {b.listing_title}
+                            </h3>
+                            {locationText && (
+                              <p className={styles.reservationLocation}>
+                                📍 {locationText}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className={styles.reservationDetailsGrid}>
+                          <div className={styles.reservationDetailItem}>
+                            <span className={styles.detailLabel}>Guest</span>
+                            <span className={styles.detailValueBold}>
+                              👤 {b.guest_name}
+                            </span>
+                          </div>
+                          <div className={styles.reservationDetailItem}>
+                            <span className={styles.detailLabel}>Check-in</span>
+                            <span className={styles.detailValue}>
+                              {formatReservationDate(b.check_in)}
+                            </span>
+                          </div>
+                          <div className={styles.reservationDetailItem}>
+                            <span className={styles.detailLabel}>Check-out</span>
+                            <span className={styles.detailValue}>
+                              {formatReservationDate(b.check_out)}
+                            </span>
+                          </div>
+                          <div className={styles.reservationDetailItem}>
+                            <span className={styles.detailLabel}>Stay</span>
+                            <span className={styles.detailValue}>
+                              {b.nights} night{b.nights !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className={styles.reservationDetailItem}>
+                            <span className={styles.detailLabel}>Guests</span>
+                            <span className={styles.detailValue}>1 guest</span>
+                          </div>
+                          <div className={styles.reservationDetailItem}>
+                            <span className={styles.detailLabel}>Total Payout</span>
+                            <span className={styles.detailValuePrice}>
+                              ${b.total_price.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
             {/* Tabs */}
             <div className={styles.tabsRow}>
@@ -431,7 +585,7 @@ export default function HostDashboardPage() {
                 }`}
                 onClick={() => setActiveTab("reservations")}
               >
-                Guest Reservations ({bookings.length})
+                All Guest Reservations ({bookings.length})
               </button>
             </div>
 
@@ -454,7 +608,7 @@ export default function HostDashboardPage() {
                         <img
                           src={
                             l.images && l.images.length > 0
-                              ? l.images[0]
+                              ? getImageUrl(l.images[0])
                               : "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80"
                           }
                           alt={l.title}
@@ -544,26 +698,70 @@ export default function HostDashboardPage() {
                           <th>Guest Name</th>
                           <th>Check-in</th>
                           <th>Check-out</th>
+                          <th>Guests</th>
                           <th>Nights</th>
                           <th>Total Payout</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {bookings.map((b) => (
-                          <tr key={b.id}>
-                            <td>
-                              <strong>#BK-{b.id}</strong>
-                            </td>
-                            <td>{b.listing_title}</td>
-                            <td>{b.guest_name}</td>
-                            <td>{b.check_in}</td>
-                            <td>{b.check_out}</td>
-                            <td>{b.nights}</td>
-                            <td>
-                              <strong>${b.total_price.toFixed(2)}</strong>
-                            </td>
-                          </tr>
-                        ))}
+                        {bookings.map((b) => {
+                          const listing = listings.find((l) => l.id === b.listing_id);
+                          const coverImage =
+                            listing?.images && listing.images.length > 0
+                              ? listing.images[0]
+                              : null;
+                          const isUpcoming = b.check_in >= todayStr;
+
+                          return (
+                            <tr key={b.id}>
+                              <td>
+                                <strong>#BK-{b.id}</strong>
+                              </td>
+                              <td>
+                                <div className={styles.tableListingCell}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={
+                                      coverImage
+                                        ? getImageUrl(coverImage)
+                                        : "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=120&q=80"
+                                    }
+                                    alt={b.listing_title}
+                                    className={styles.tableThumb}
+                                  />
+                                  <div>
+                                    <div style={{ fontWeight: 600, color: "#111827" }}>
+                                      {b.listing_title}
+                                    </div>
+                                    {listing && (
+                                      <div style={{ fontSize: "0.78rem", color: "#6b7280" }}>
+                                        {listing.city}, {listing.country}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>{b.guest_name}</td>
+                              <td>{formatReservationDate(b.check_in)}</td>
+                              <td>{formatReservationDate(b.check_out)}</td>
+                              <td>1</td>
+                              <td>{b.nights}</td>
+                              <td>
+                                <strong>${b.total_price.toFixed(2)}</strong>
+                              </td>
+                              <td>
+                                <span
+                                  className={
+                                    isUpcoming ? styles.badgeConfirmed : styles.badgePast
+                                  }
+                                >
+                                  {isUpcoming ? "Confirmed" : "Completed"}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
