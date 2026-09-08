@@ -9,7 +9,8 @@ from pydantic import BaseModel
 
 
 class HostResponse(BaseModel):
-    """Public host information. Only exposes the host's name."""
+    """Public host information."""
+    id: int | None = None
     name: str
 
 
@@ -28,6 +29,8 @@ class ListingResponse(BaseModel):
     rating_avg: float | None
     review_count: int
     host: HostResponse
+    host_id: int | None = None
+    host_name: str | None = None
     images: list[str]
     amenities: list[str]
 

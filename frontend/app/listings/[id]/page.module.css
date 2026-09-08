@@ -307,6 +307,26 @@
   margin: 0;
 }
 
+.switchHostBtn {
+  background-color: #f7f7f7;
+  border: 1px solid #dddddd;
+  color: #222222;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.switchHostBtn:hover {
+  background-color: #222222;
+  color: #ffffff;
+  border-color: #222222;
+}
+
 /* Highlights List matching Screenshot 2 */
 .highlightsList {
   display: flex;
@@ -469,6 +489,14 @@
 .dayDisabled {
   color: #d3d3d3;
   cursor: not-allowed;
+}
+
+.dayUnavailable {
+  color: #b0b0b0 !important;
+  text-decoration: line-through;
+  background-color: #f7f7f7 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
 }
 
 .clearDatesBtn {
@@ -815,6 +843,68 @@
 .reserveBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.reserveBtnDisabled {
+  background: #dddddd !important;
+  color: #888888 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.rangeErrorNotice {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #c13515;
+  font-size: 0.84rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.checkingAvailabilityNotice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #717171;
+  margin-bottom: 12px;
+}
+
+.spinnerIcon {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.availabilityErrorNotice {
+  font-size: 0.82rem;
+  color: #c13515;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.retryAvailBtn {
+  background: none;
+  border: none;
+  color: #222222;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
 }
 
 .noChargeNotice {

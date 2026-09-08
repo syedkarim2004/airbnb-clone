@@ -117,6 +117,7 @@ def search_listings(params: SearchParams) -> dict:
                 l.price_per_night,
                 l.cleaning_fee,
                 l.max_guests,
+                l.host_id,
                 u.name AS host_name,
                 AVG(r.rating)  AS rating_avg,
                 COUNT(r.id)    AS review_count
@@ -177,6 +178,7 @@ def get_active_listing_by_id(listing_id: int) -> dict | None:
                 l.price_per_night,
                 l.cleaning_fee,
                 l.max_guests,
+                l.host_id,
                 u.name AS host_name,
                 AVG(r.rating) AS rating_avg,
                 COUNT(r.id) AS review_count
@@ -274,7 +276,9 @@ def _assemble_listing(
         "max_guests": row["max_guests"],
         "rating_avg": round(row["rating_avg"], 2) if row["rating_avg"] is not None else None,
         "review_count": row["review_count"],
-        "host": {"name": row["host_name"]},
+        "host": {"id": row["host_id"] if "host_id" in row.keys() else None, "name": row["host_name"]},
+        "host_id": row["host_id"] if "host_id" in row.keys() else None,
+        "host_name": row["host_name"],
         "images": images_map.get(listing_id, []),
         "amenities": amenities_map.get(listing_id, []),
     }

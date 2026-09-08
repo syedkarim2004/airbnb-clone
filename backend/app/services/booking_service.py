@@ -17,7 +17,7 @@ Transaction safety:
 from __future__ import annotations
 
 import math
-from datetime import date
+from datetime import date, timedelta
 
 from database import get_connection
 
@@ -217,6 +217,56 @@ def get_guest_bookings(guest_id: int) -> list[dict]:
                 },
             })
         return results
+    finally:
+        conn.close()
+
+
+def get_listing_availability(listing_id: int) -> dict:
+    """
+    Return all unavailable dates (occupied nights) and booked ranges for a listing.
+    Dates are derived dynamically from persisted bookings in SQLite.
+    A booking from check_in to check_out occupies each night from check_in up
+    to (excluding) check_out. Checkout day is available for subsequent bookings.
+    """
+    conn = get_connection()
+    try:
+        listing = conn.execute(
+            "SELECT id, is_active FROM listings WHERE id = ?", (listing_id,)
+        ).fetchone()
+
+        if listing is None:
+            raise BookingValidationError(404, "Listing not found")
+        if not listing["is_active"]:
+            raise BookingValidationError(404, "Listing is not available")
+
+        today_str = date.today().isoformat()
+        rows = conn.execute(
+            """
+            SELECT check_in, check_out
+            FROM bookings
+            WHERE listing_id = ? AND check_out >= ?
+            ORDER BY check_in ASC
+            """,
+            (listing_id, today_str),
+        ).fetchall()
+
+        unavailable_dates: set[str] = set()
+        booked_ranges: list[dict[str, str]] = []
+
+        for row in rows:
+            ci = date.fromisoformat(row["check_in"])
+            co = date.fromisoformat(row["check_out"])
+            booked_ranges.append({"check_in": row["check_in"], "check_out": row["check_out"]})
+            cur = ci
+            while cur < co:
+                unavailable_dates.add(cur.isoformat())
+                cur += timedelta(days=1)
+
+        return {
+            "listing_id": listing_id,
+            "unavailable_dates": sorted(list(unavailable_dates)),
+            "booked_ranges": booked_ranges,
+        }
     finally:
         conn.close()
 

@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas.listing import ListingResponse, ListingsPageResponse
-from app.services import listing_service
+from app.services import listing_service, booking_service
 from app.services.listing_service import SearchParams
 
 router = APIRouter(prefix="/api/listings", tags=["listings"])
@@ -81,6 +81,15 @@ def get_listings(
     return listing_service.search_listings(params)
 
 
+@router.get("/{listing_id}/availability")
+def get_listing_availability(listing_id: int):
+    """Return unavailable dates and booked ranges for a listing."""
+    try:
+        return booking_service.get_listing_availability(listing_id)
+    except booking_service.BookingValidationError as e:
+        raise HTTPException(status_code=e.status, detail=e.detail)
+
+
 @router.get("/{listing_id}", response_model=ListingResponse)
 def get_listing(listing_id: int):
     """Return a single active listing by ID."""
@@ -88,3 +97,4 @@ def get_listing(listing_id: int):
     if listing is None:
         raise HTTPException(status_code=404, detail="Listing not found")
     return listing
+

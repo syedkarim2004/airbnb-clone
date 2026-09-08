@@ -4,6 +4,7 @@
  */
 
 export interface Host {
+  id?: number;
   name: string;
 }
 
@@ -21,8 +22,16 @@ export interface Listing {
   rating_avg: number | null;
   review_count: number;
   host: Host;
+  host_id?: number;
+  host_name?: string;
   images: string[];
   amenities: string[];
+}
+
+export interface ListingAvailability {
+  listing_id: number;
+  unavailable_dates: string[];
+  booked_ranges: Array<{ check_in: string; check_out: string }>;
 }
 
 /**

@@ -95,7 +95,7 @@ function mapBookingError(rawMessage: string): string {
     return "Please switch to a guest account to reserve this stay.";
   }
   if (msg.includes("overlap") || msg.includes("dates")) {
-    return "These dates are no longer available. Please go back and choose different dates.";
+    return "These dates were just booked. Please choose different dates.";
   }
   if (msg.includes("in the past")) {
     return "Check-in date must be in the future.";
@@ -158,6 +158,7 @@ interface CheckoutModalProps {
   primaryPhotoUrl: string;
   onClose: () => void;
   onConfirmed: (booking: BookingResponse) => void;
+  onAvailabilityChange?: () => void;
 }
 
 type ModalScreen = "payment" | "processing" | "confirmed" | "error";
@@ -179,6 +180,7 @@ export function CheckoutModal({
   primaryPhotoUrl,
   onClose,
   onConfirmed,
+  onAvailabilityChange,
 }: CheckoutModalProps) {
   const [screen, setScreen] = useState<ModalScreen>("payment");
   const [confirmedBooking, setConfirmedBooking] = useState<BookingResponse | null>(null);
@@ -249,10 +251,12 @@ export function CheckoutModal({
       setConfirmedBooking(booking);
       setScreen("confirmed");
       onConfirmed(booking);
+      onAvailabilityChange?.();
     } catch (err: unknown) {
       const raw = err instanceof Error ? err.message : "Booking failed. Please try again.";
       setBookingErrorMsg(mapBookingError(raw));
       setScreen("error");
+      onAvailabilityChange?.();
     }
   };
 
@@ -561,11 +565,17 @@ export function CheckoutModal({
               type="button"
               className={styles.retryBtn}
               onClick={() => {
-                setScreen("payment");
-                setBookingErrorMsg("");
+                if (bookingErrorMsg.includes("booked") || bookingErrorMsg.includes("dates")) {
+                  onClose();
+                } else {
+                  setScreen("payment");
+                  setBookingErrorMsg("");
+                }
               }}
             >
-              ← Go back and try again
+              {bookingErrorMsg.includes("booked") || bookingErrorMsg.includes("dates")
+                ? "← Choose different dates"
+                : "← Go back and try again"}
             </button>
           </div>
         )}

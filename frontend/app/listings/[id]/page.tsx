@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import {
   getListing,
   getListingReviews,
+  getListingAvailability,
   createReview,
   getImageUrl,
   BookingResponse,
+  ListingAvailability,
 } from "@/lib/api";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { Listing } from "@/types/listing";
@@ -39,12 +41,117 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+// ── Date range availability validator ──────────────────────────────────────
+function validateDateRange(
+  ciStr: string,
+  coStr: string,
+  avail: ListingAvailability | null
+): { valid: boolean; error?: string } {
+  if (!ciStr || !coStr) return { valid: false };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const ci = new Date(ciStr + "T00:00:00");
+  const co = new Date(coStr + "T00:00:00");
+
+  if (ci.getTime() < today.getTime()) {
+    return { valid: false, error: "Check-in date cannot be in the past." };
+  }
+  if (co.getTime() <= ci.getTime()) {
+    return { valid: false, error: "Checkout must be after check-in." };
+  }
+
+  if (avail) {
+    // 1. Authoritative overlap check matching backend formula:
+    // an existing booking conflicts when: b.check_in < coStr AND b.check_out > ciStr
+    for (const b of avail.booked_ranges) {
+      if (b.check_in < coStr && b.check_out > ciStr) {
+        return {
+          valid: false,
+          error: "Some dates in your stay are unavailable. Please choose different dates.",
+        };
+      }
+    }
+
+    // 2. Night-by-night check against unavailable occupied nights
+    const unavailSet = new Set(avail.unavailable_dates);
+    const cur = new Date(ci);
+    while (cur < co) {
+      const curStr = cur.toISOString().split("T")[0];
+      if (unavailSet.has(curStr)) {
+        return {
+          valid: false,
+          error: "Some dates in your stay are unavailable. Please choose different dates.",
+        };
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+
+  return { valid: true };
+}
+
+// ── Search for first available non-overlapping 3-night window ──────────────
+function findFirstAvailableRange(
+  avail: ListingAvailability | null,
+  daysAhead: number = 7,
+  stayLength: number = 3
+): { checkIn: string; checkOut: string } {
+  const unavailSet = new Set(avail?.unavailable_dates || []);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let offset = daysAhead; offset < 120; offset++) {
+    const ci = new Date(today);
+    ci.setDate(today.getDate() + offset);
+    let allAvailable = true;
+
+    for (let night = 0; night < stayLength; night++) {
+      const nightDate = new Date(ci);
+      nightDate.setDate(ci.getDate() + night);
+      const nightStr = nightDate.toISOString().split("T")[0];
+      if (unavailSet.has(nightStr)) {
+        allAvailable = false;
+        break;
+      }
+    }
+
+    if (allAvailable) {
+      const co = new Date(ci);
+      co.setDate(ci.getDate() + stayLength);
+      const ciStr = ci.toISOString().split("T")[0];
+      const coStr = co.toISOString().split("T")[0];
+
+      if (avail) {
+        const overlap = avail.booked_ranges.some(
+          (b) => b.check_in < coStr && b.check_out > ciStr
+        );
+        if (!overlap) {
+          return { checkIn: ciStr, checkOut: coStr };
+        }
+      } else {
+        return { checkIn: ciStr, checkOut: coStr };
+      }
+    }
+  }
+
+  const fallbackCi = new Date(today);
+  fallbackCi.setDate(today.getDate() + daysAhead);
+  const fallbackCo = new Date(today);
+  fallbackCo.setDate(today.getDate() + daysAhead + stayLength);
+  return {
+    checkIn: fallbackCi.toISOString().split("T")[0],
+    checkOut: fallbackCo.toISOString().split("T")[0],
+  };
+}
+
 export default function ListingDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
 
-  const { currentUser, isGuest } = useAuth();
+  const { currentUser, isGuest, switchUser, allUsers } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [listing, setListing] = useState<Listing | null>(null);
@@ -65,18 +172,11 @@ export default function ListingDetailPage() {
   const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  // Dynamic initial booking dates (7 days and 10 days in the future)
-  const defaultDates = useMemo(() => {
-    const today = new Date();
-    const ci = new Date(today);
-    ci.setDate(today.getDate() + 7);
-    const co = new Date(today);
-    co.setDate(today.getDate() + 10);
-    return {
-      checkIn: ci.toISOString().split("T")[0],
-      checkOut: co.toISOString().split("T")[0],
-    };
-  }, []);
+  // Availability states
+  const [availability, setAvailability] = useState<ListingAvailability | null>(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState<boolean>(true);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  const [rangeError, setRangeError] = useState<string | null>(null);
 
   // Booking widget state
   const [checkInDate, setCheckInDate] = useState<string>(() => {
@@ -100,6 +200,46 @@ export default function ListingDetailPage() {
   const [calYear, setCalYear] = useState<number>(() => new Date().getFullYear());
 
   const isSaved = listing ? isFavorite(listing.id) : false;
+
+  const unavailableSet = useMemo(() => {
+    return new Set(availability?.unavailable_dates || []);
+  }, [availability]);
+
+  // Fetch availability from backend
+  const fetchAvailability = useCallback(async () => {
+    if (!id) return;
+    setAvailabilityLoading(true);
+    setAvailabilityError(null);
+    try {
+      const data = await getListingAvailability(id);
+      setAvailability(data);
+
+      // Validate or advance current dates if overlapping
+      setCheckInDate((curCi) => {
+        setCheckOutDate((curCo) => {
+          if (curCi && curCo) {
+            const check = validateDateRange(curCi, curCo, data);
+            if (!check.valid) {
+              const safe = findFirstAvailableRange(data, 7, 3);
+              setCheckInDate(safe.checkIn);
+              return safe.checkOut;
+            }
+          }
+          return curCo;
+        });
+        return curCi;
+      });
+    } catch {
+      setAvailabilityError("Couldn't check availability. Please try again.");
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetchAvailability();
+  }, [id, fetchAvailability]);
 
   useEffect(() => {
     if (!id) return;
@@ -139,6 +279,18 @@ export default function ListingDetailPage() {
     };
   }, [id]);
 
+  // Check date range validity whenever dates or availability change
+  useEffect(() => {
+    if (checkInDate && checkOutDate) {
+      const check = validateDateRange(checkInDate, checkOutDate, availability);
+      if (!check.valid) {
+        setRangeError(check.error || "Some dates in your stay are unavailable. Please choose different dates.");
+      } else {
+        setRangeError(null);
+      }
+    }
+  }, [checkInDate, checkOutDate, availability]);
+
   // Calculate nights
   const nights = useMemo(() => {
     if (!checkInDate || !checkOutDate) return 1;
@@ -161,6 +313,14 @@ export default function ListingDetailPage() {
   const cleaningFee = listing?.cleaning_fee || 0;
   const totalPrice = priceSubtotal + cleaningFee + serviceFee;
 
+  const isReserveDisabled = useMemo(() => {
+    if (!checkInDate || !checkOutDate) return true;
+    if (availabilityLoading) return true;
+    if (rangeError) return true;
+    const check = validateDateRange(checkInDate, checkOutDate, availability);
+    return !check.valid;
+  }, [checkInDate, checkOutDate, availabilityLoading, rangeError, availability]);
+
   // Handle Share link
   const handleShare = () => {
     if (typeof window !== "undefined") {
@@ -174,6 +334,8 @@ export default function ListingDetailPage() {
   // shows friendly message for host-only users.
   const handleReserve = () => {
     if (!listing || !currentUser) return;
+    if (isReserveDisabled) return;
+
     if (!isGuest) {
       setGuestSwitchMsg(
         "You're currently signed in as a host. Switch to a guest account (e.g. Carol Davis) in the top-right menu to make a reservation."
@@ -298,14 +460,33 @@ export default function ListingDetailPage() {
     const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
     if (!checkInDate || (checkInDate && checkOutDate)) {
+      if (unavailableSet.has(formatted)) {
+        setRangeError("That date is unavailable. Please select an available check-in date.");
+        return;
+      }
       setCheckInDate(formatted);
       setCheckOutDate("");
+      setRangeError(null);
     } else {
       if (formatted <= checkInDate) {
+        if (unavailableSet.has(formatted)) {
+          setRangeError("That date is unavailable. Please select an available check-in date.");
+          return;
+        }
         setCheckInDate(formatted);
         setCheckOutDate("");
+        setRangeError(null);
       } else {
+        const check = validateDateRange(checkInDate, formatted, availability);
+        if (!check.valid) {
+          setRangeError(
+            check.error ||
+              "Some dates in your stay are unavailable. Please choose different dates."
+          );
+          return;
+        }
         setCheckOutDate(formatted);
+        setRangeError(null);
       }
     }
   };
@@ -333,6 +514,8 @@ export default function ListingDetailPage() {
           currentDayDate.setHours(0, 0, 0, 0);
           const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
           const isPast = currentDayDate.getTime() < today.getTime();
+          const isUnavailable = unavailableSet.has(formatted);
+          const isDisabled = isPast || isUnavailable;
           const isCheckIn = checkInDate === formatted;
           const isCheckOut = checkOutDate === formatted;
           const inRange =
@@ -345,11 +528,23 @@ export default function ListingDetailPage() {
             <button
               type="button"
               key={`day-${year}-${month}-${dayNum}`}
-              disabled={isPast}
-              className={`${styles.dayBtn} ${isPast ? styles.dayDisabled : ""} ${
-                isCheckIn || isCheckOut ? styles.daySelected : ""
-              } ${inRange ? styles.dayInRange : ""}`}
-              onClick={() => !isPast && handleCalDateClick(year, month, dayNum)}
+              disabled={isDisabled}
+              aria-label={
+                isUnavailable
+                  ? `${dayNum} ${MONTH_NAMES[month]} (Unavailable)`
+                  : `${dayNum} ${MONTH_NAMES[month]}`
+              }
+              title={isUnavailable ? "Unavailable / Booked" : undefined}
+              className={`${styles.dayBtn} ${
+                isPast
+                  ? styles.dayDisabled
+                  : isUnavailable
+                  ? styles.dayUnavailable
+                  : ""
+              } ${isCheckIn || isCheckOut ? styles.daySelected : ""} ${
+                inRange ? styles.dayInRange : ""
+              }`}
+              onClick={() => !isDisabled && handleCalDateClick(year, month, dayNum)}
             >
               {dayNum}
             </button>
@@ -508,15 +703,40 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Host Row */}
-            <div className={styles.hostRow}>
-              <div className={styles.hostAvatar}>
-                {listing.host.name ? listing.host.name.charAt(0).toUpperCase() : "H"}
-              </div>
-              <div>
-                <h4 className={styles.hostName}>Hosted by {listing.host.name}</h4>
-                <p className={styles.hostSubtitle}>Superhost · 3 months hosting</p>
-              </div>
-            </div>
+            {(() => {
+              const hostDisplayName = listing.host?.name || listing.host_name || "Host";
+              const hostId = listing.host?.id ?? listing.host_id;
+              const hostUserMatch = allUsers.find(
+                (u) =>
+                  (hostId !== undefined && u.id === hostId) ||
+                  u.name.toLowerCase() === hostDisplayName.toLowerCase()
+              );
+
+              return (
+                <div className={styles.hostRow}>
+                  <div className={styles.hostAvatar}>
+                    {hostDisplayName ? hostDisplayName.charAt(0).toUpperCase() : "H"}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h4 className={styles.hostName}>Hosted by {hostDisplayName}</h4>
+                    <p className={styles.hostSubtitle}>Host on Airbnb</p>
+                  </div>
+                  {hostUserMatch && (
+                    <button
+                      type="button"
+                      className={styles.switchHostBtn}
+                      onClick={() => {
+                        switchUser(hostUserMatch);
+                        router.push("/host");
+                      }}
+                      title={`Switch to ${hostDisplayName} and open Host Dashboard`}
+                    >
+                      Manage as {hostDisplayName} →
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Highlights List matching Screenshot 2 */}
             <div className={styles.highlightsList}>
@@ -541,7 +761,7 @@ export default function ListingDetailPage() {
                 <div>
                   <h4 className={styles.highlightTitle}>Exceptional host communication</h4>
                   <p className={styles.highlightDesc}>
-                    Recent guests gave {listing.host.name} a 5-star rating for communication.
+                    Recent guests gave {listing.host?.name || listing.host_name || "the host"} a 5-star rating for communication.
                   </p>
                 </div>
               </div>
@@ -572,6 +792,25 @@ export default function ListingDetailPage() {
                   ? `${checkInDate} – Select checkout`
                   : "Select dates"}
               </p>
+
+              {availabilityLoading && (
+                <div className={styles.checkingAvailabilityNotice} style={{ justifyContent: "flex-start", marginBottom: "8px" }}>
+                  <span className={styles.spinnerIcon}>↻</span> Checking availability...
+                </div>
+              )}
+              {rangeError && (
+                <div className={styles.rangeErrorNotice} style={{ textAlign: "left", marginBottom: "8px" }}>
+                  ⚠️ {rangeError}
+                </div>
+              )}
+              {availabilityError && (
+                <div className={styles.availabilityErrorNotice} style={{ textAlign: "left", marginBottom: "8px" }}>
+                  ⚠️ {availabilityError}{" "}
+                  <button type="button" onClick={fetchAvailability} className={styles.retryAvailBtn}>
+                    Retry
+                  </button>
+                </div>
+              )}
 
               <div className={styles.calendarMonthsRow}>
                 {/* Month 1 */}
@@ -636,8 +875,10 @@ export default function ListingDetailPage() {
                   type="button"
                   className={styles.clearDatesBtn}
                   onClick={() => {
-                    setCheckInDate(defaultDates.checkIn);
-                    setCheckOutDate(defaultDates.checkOut);
+                    const safe = findFirstAvailableRange(availability, 7, 3);
+                    setCheckInDate(safe.checkIn);
+                    setCheckOutDate(safe.checkOut);
+                    setRangeError(null);
                   }}
                 >
                   Reset dates
@@ -861,10 +1102,18 @@ export default function ListingDetailPage() {
                     onChange={(e) => {
                       const val = e.target.value;
                       setCheckInDate(val);
-                      if (checkOutDate && val >= checkOutDate) {
-                        const nextDay = new Date(val);
-                        nextDay.setDate(nextDay.getDate() + 1);
-                        setCheckOutDate(nextDay.toISOString().split("T")[0]);
+                      if (checkOutDate) {
+                        if (val >= checkOutDate) {
+                          const nextDay = new Date(val);
+                          nextDay.setDate(nextDay.getDate() + 1);
+                          const nextStr = nextDay.toISOString().split("T")[0];
+                          setCheckOutDate(nextStr);
+                          const check = validateDateRange(val, nextStr, availability);
+                          setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
+                        } else {
+                          const check = validateDateRange(val, checkOutDate, availability);
+                          setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
+                        }
                       }
                     }}
                   />
@@ -876,7 +1125,14 @@ export default function ListingDetailPage() {
                     min={checkInDate || new Date().toISOString().split("T")[0]}
                     className={styles.dateValueInput}
                     value={checkOutDate}
-                    onChange={(e) => setCheckOutDate(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCheckOutDate(val);
+                      if (checkInDate) {
+                        const check = validateDateRange(checkInDate, val, availability);
+                        setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -897,10 +1153,31 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
+            {/* Availability / Range notices */}
+            {availabilityLoading && (
+              <div className={styles.checkingAvailabilityNotice}>
+                <span className={styles.spinnerIcon}>↻</span> Checking availability...
+              </div>
+            )}
+            {rangeError && (
+              <div className={styles.rangeErrorNotice}>
+                ⚠️ {rangeError}
+              </div>
+            )}
+            {availabilityError && (
+              <div className={styles.availabilityErrorNotice}>
+                ⚠️ {availabilityError}{" "}
+                <button type="button" onClick={fetchAvailability} className={styles.retryAvailBtn}>
+                  Retry
+                </button>
+              </div>
+            )}
+
             {/* Reserve Button */}
             <button
               type="button"
-              className={styles.reserveBtn}
+              className={`${styles.reserveBtn} ${isReserveDisabled ? styles.reserveBtnDisabled : ""}`}
+              disabled={isReserveDisabled}
               onClick={handleReserve}
             >
               Reserve
@@ -978,6 +1255,10 @@ export default function ListingDetailPage() {
           onConfirmed={(booking) => {
             setBookingSuccess(booking);
             setShowCheckout(false);
+            fetchAvailability();
+          }}
+          onAvailabilityChange={() => {
+            fetchAvailability();
           }}
         />
       )}

@@ -4,12 +4,13 @@
  * for Listings, Bookings, Favorites, Reviews, and Host operations.
  */
 
-import { Listing, ListingsPage } from "@/types/listing";
+import { Listing, ListingsPage, ListingAvailability } from "@/types/listing";
 import { BookingCreateRequest, BookingResponse, BookingWithListing } from "@/types/booking";
 import { FavoriteItem, FavoriteResponse } from "@/types/favorite";
 import { Review, ReviewCreateRequest } from "@/types/review";
 import { HostBooking, HostListing, HostListingCreate, HostListingUpdate } from "@/types/host";
 
+export type { ListingAvailability } from "@/types/listing";
 export type { BookingCreateRequest, BookingResponse, BookingWithListing } from "@/types/booking";
 export type { FavoriteItem, FavoriteResponse } from "@/types/favorite";
 export type { Review, ReviewCreateRequest } from "@/types/review";
@@ -127,6 +128,12 @@ export async function getListings(params?: ListingSearchParams): Promise<Listing
 
 export async function getListing(id: number | string): Promise<Listing> {
   return fetchJson<Listing>(`/api/listings/${id}`);
+}
+
+export async function getListingAvailability(
+  id: number | string
+): Promise<ListingAvailability> {
+  return fetchJson<ListingAvailability>(`/api/listings/${id}/availability`);
 }
 
 // ── Bookings (My Trips) ───────────────────────────────────────────────────

@@ -23,6 +23,8 @@ export const SEEDED_USERS: User[] = [
   { id: 2, name: "Bob Chen", email: "bob@example.com", role: "host" },
   { id: 5, name: "Priya Sharma", email: "priya.sharma@example.com", role: "host" },
   { id: 6, name: "Vikram Malhotra", email: "vikram.malhotra@example.com", role: "host" },
+  { id: 7, name: "Elena Rossi", email: "elena.rossi@example.com", role: "host" },
+  { id: 8, name: "Kenji Sato", email: "kenji.sato@example.com", role: "host" },
 
   // Both
   { id: 4, name: "David Wilson", email: "david@example.com", role: "both" },
