@@ -1,47 +1,160 @@
+/* ============================================================
+   SERVICES VIEW CONTAINER & LAYOUT
+   ============================================================ */
 .container {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
-  padding-bottom: 2rem;
+  gap: 2.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0 4rem 0;
 }
 
+/* Category Filter Pills Row */
+.categoryPillsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0.5rem 0 1rem;
+  margin-top: -0.5rem;
+}
+
+.categoryPillsRow::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border-radius: 30px;
+  border: 1px solid #dddddd;
+  background-color: #ffffff;
+  color: #222222;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.categoryPill:hover {
+  border-color: #222222;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.categoryPillActive {
+  background-color: #222222;
+  border-color: #222222;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.categoryPillActive:hover {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+.filterNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f7f7f7;
+  border: 1px solid #eaeaea;
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #222222;
+}
+
+.clearFilterBtn {
+  background: none;
+  border: none;
+  text-decoration: underline;
+  font-weight: 600;
+  color: #222222;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.88rem;
+}
+
+.clearFilterBtn:hover {
+  color: #ff385c;
+}
+
+/* ============================================================
+   SECTION & HEADINGS
+   ============================================================ */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 1.35rem;
 }
 
 .sectionTitle {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 700;
   color: #222222;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  margin: 0;
   cursor: pointer;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .sectionTitle:hover {
   text-decoration: underline;
 }
 
-.arrowRight {
-  font-size: 1.2rem;
-  font-weight: 400;
+.titleArrowCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #f2f2f2;
+  font-size: 1rem;
+  color: #222222;
+  margin-left: 0.25rem;
+  transition: background-color 0.15s;
 }
 
+.sectionTitle:hover .titleArrowCircle {
+  background-color: #e5e5e5;
+}
+
+.sectionDivider {
+  height: 1px;
+  background-color: #ebebeb;
+  margin: 3rem 0;
+}
+
+/* ============================================================
+   SERVICES GRID (Consistent 4-column responsive layout)
+   ============================================================ */
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.25rem 0.85rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem 1.5rem;
 }
 
+/* ============================================================
+   SERVICE CARD ITEM
+   ============================================================ */
 .serviceCard {
   display: flex;
   flex-direction: column;
@@ -49,14 +162,19 @@
   background: transparent;
   border-radius: 14px;
   position: relative;
-  transition: transform 0.15s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  outline: none;
+}
+
+.serviceCard:focus-visible {
+  box-shadow: 0 0 0 2px #222222;
 }
 
 .imageWrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
-  border-radius: 14px;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
   overflow: hidden;
   background-color: #f0f0f0;
 }
@@ -66,17 +184,39 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.3s ease;
 }
 
-.heartBtn {
+.serviceCard:hover .image {
+  transform: scale(1.04);
+}
+
+.categoryBadge {
   position: absolute;
   top: 10px;
-  right: 10px;
+  left: 10px;
+  z-index: 3;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #222222;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.02em;
+}
+
+/* Heart / Favorite Button */
+.heartBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   z-index: 5;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,16 +224,16 @@
 }
 
 .heartBtn:hover {
-  transform: scale(1.12);
+  transform: scale(1.15);
 }
 
 .heartSvg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   stroke: #ffffff;
   stroke-width: 2;
-  fill: rgba(0, 0, 0, 0.4);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  fill: rgba(0, 0, 0, 0.35);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 
 .heartSvgActive {
@@ -101,11 +241,21 @@
   stroke: #ff385c !important;
 }
 
+/* Card Content Info */
 .info {
-  margin-top: 0.65rem;
+  margin-top: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+.locationCategory {
+  font-size: 0.825rem;
+  color: #717171;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title {
@@ -113,7 +263,7 @@
   font-weight: 600;
   color: #222222;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -127,27 +277,488 @@
 }
 
 .priceRating {
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
   color: #222222;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .priceBold {
   font-weight: 600;
+  color: #222222;
 }
 
 .ratingText {
   color: #222222;
   font-weight: 500;
+  font-size: 0.875rem;
 }
 
-@media (max-width: 640px) {
+.reviewCount {
+  color: #717171;
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+/* ============================================================
+   SERVICE DETAIL & BOOKING MODAL
+   ============================================================ */
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalDialog {
+  background-color: #ffffff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleUp 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #eaeaea;
+  background-color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #222222;
+  transition: all 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.modalImageBanner {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background-color: #f0f0f0;
+}
+
+.modalImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modalBody {
+  padding: 1.75rem 2rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.modalHeaderBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modalMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: #717171;
+}
+
+.modalCategoryPill {
+  background-color: #f0f0f0;
+  color: #222222;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.modalTitle {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #222222;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.modalHostRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.modalHostInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hostAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff385c 0%, #e00b41 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.hostName {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #222222;
+  margin: 0;
+}
+
+.hostRole {
+  font-size: 0.8rem;
+  color: #717171;
+  margin: 0;
+}
+
+.modalRatingBadge {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #222222;
+}
+
+.modalDescription {
+  font-size: 0.95rem;
+  color: #484848;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.includesSection {
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  padding: 1.15rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.includesHeading {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #222222;
+  margin: 0;
+}
+
+.includesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.includesItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #333333;
+}
+
+.checkIcon {
+  color: #008a05;
+  font-weight: 700;
+}
+
+/* Booking Form Box */
+.bookingBox {
+  border: 1px solid #dddddd;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.bookingPriceHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.bookingPrice {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #222222;
+}
+
+.bookingDuration {
+  font-size: 0.85rem;
+  color: #717171;
+}
+
+.bookingFieldsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.bookingField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bookingLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #484848;
+}
+
+.bookingInput,
+.bookingSelect {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #b0b0b0;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: #222222;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.bookingInput:focus,
+.bookingSelect:focus {
+  border-color: #222222;
+}
+
+.guestStepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #b0b0b0;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+}
+
+.stepperBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #b0b0b0;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.stepperBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stepperCount {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.bookBtn {
+  background-color: #ff385c;
+  color: #ffffff;
+  border: none;
+  padding: 0.9rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  width: 100%;
+}
+
+.bookBtn:hover {
+  background-color: #e00b41;
+}
+
+/* Success Confirmation State */
+.successContainer {
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.successIcon {
+  font-size: 3rem;
+}
+
+.successTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0;
+}
+
+.successText {
+  font-size: 0.92rem;
+  color: #717171;
+  max-width: 420px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.closeSuccessBtn {
+  margin-top: 0.5rem;
+  background-color: #222222;
+  color: #ffffff;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.closeSuccessBtn:hover {
+  background-color: #000000;
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+
+/* Standard laptop: 4 columns */
+@media (max-width: 1400px) {
+  .cardsGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem 1.25rem;
+  }
+}
+
+/* Small laptop / tablet landscape: 3 columns */
+@media (max-width: 1100px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem 1.1rem;
+  }
+}
+
+/* Tablet: 2 columns */
+@media (max-width: 768px) {
   .cardsGrid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 1.25rem 0.875rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.25rem;
+  }
+
+  .bookingFieldsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalBody {
+    padding: 1.25rem 1.25rem 1.75rem;
+  }
+}
+
+/* Mobile: 2 columns */
+@media (max-width: 480px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 0.625rem;
   }
 
   .sectionTitle {
     font-size: 1.15rem;
+  }
+
+  .title {
+    font-size: 0.88rem;
+  }
+
+  .modalDialog {
+    border-radius: 14px;
+    max-height: 94vh;
+  }
+
+  .modalImageBanner {
+    height: 190px;
+  }
+
+  .modalBody {
+    padding: 1rem 1rem 1.5rem;
+    gap: 1.15rem;
+  }
+
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+}
+
+/* Very small mobile: 1 column */
+@media (max-width: 360px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
   }
 }

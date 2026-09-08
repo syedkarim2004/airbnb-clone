@@ -34,8 +34,14 @@ export default function Home() {
   const [infants, setInfants] = useState<number>(0);
   const [pets, setPets] = useState<number>(0);
   const [serviceType, setServiceType] = useState<string>("");
+  const isScrolled = useScrolled(70);
+  const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
 
   const handleSearch = useCallback(() => {
+    if (activeTab === "services") {
+      setIsSearchExpanded(false);
+      return;
+    }
     const params = new URLSearchParams();
     if (destination.trim()) {
       const city = destination.split(",")[0].trim();
@@ -54,10 +60,7 @@ export default function Home() {
       params.set("guests", totalGuests.toString());
     }
     router.push(`/search?${params.toString()}`);
-  }, [destination, checkIn, checkOut, adults, children, router]);
-
-  const isScrolled = useScrolled(70);
-  const [isSearchExpanded, setIsSearchExpanded] = useState<boolean>(false);
+  }, [activeTab, destination, checkIn, checkOut, adults, children, router]);
 
   const fetchListings = useCallback(async () => {
     try {
@@ -281,7 +284,16 @@ export default function Home() {
           )}
 
           {activeTab === "experiences" && <ExperiencesView />}
-          {activeTab === "services" && <ServicesView />}
+          {activeTab === "services" && (
+            <ServicesView
+              selectedServiceType={serviceType}
+              destinationFilter={destination}
+              onClearFilters={() => {
+                setServiceType("");
+                setDestination("");
+              }}
+            />
+          )}
         </div>
       </main>
 

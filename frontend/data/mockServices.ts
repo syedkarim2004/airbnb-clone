@@ -12,10 +12,15 @@ export interface ServiceItem {
   priceDisplay: string;
   rating: number;
   image: string;
+  location?: string;
+  reviewsCount?: number;
+  duration?: string;
+  description?: string;
+  includes?: string[];
 }
 
 export const MOCK_SERVICES: ServiceItem[] = [
-  // Photography
+  // ==================== Photography ====================
   {
     id: "srv-1",
     title: "New Delhi Photo Session by a Professional Portrait Artist",
@@ -24,6 +29,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $105 / guest",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb",
+    location: "New Delhi, India",
+    reviewsCount: 68,
+    duration: "2 hours",
+    description: "Personalized portrait walk across iconic Delhi monuments and secret heritage alleys with professional prime lenses and creative natural lighting.",
+    includes: ["35+ retouched high-res photos", "Online digital gallery download", "Wardrobe guidance"],
   },
   {
     id: "srv-2",
@@ -33,6 +43,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $120 / guest",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1519741497674-611481863552",
+    location: "Lodhi Art District, New Delhi",
+    reviewsCount: 44,
+    duration: "2.5 hours",
+    description: "Candid, magazine-style couple portraits celebrating anniversaries, proposals, and honeymoon getaways in cinematic urban settings.",
+    includes: ["50+ edited portraits", "Same-day preview highlights", "Location scouted & planned"],
   },
   {
     id: "srv-3",
@@ -42,6 +57,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $95 / guest",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32",
+    location: "Old Delhi, India",
+    reviewsCount: 82,
+    duration: "2 hours",
+    description: "Vibrant street-style photography documenting your journey through spice markets, historic rooftops, and Mughal architectural grandeur.",
+    includes: ["40 high-resolution digital files", "Full color correction", "Local insider commentary"],
   },
   {
     id: "srv-4",
@@ -51,6 +71,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $115 / group",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
+    location: "Connaught Place, New Delhi",
+    reviewsCount: 39,
+    duration: "1.5 hours",
+    description: "Sleek geometric urban portraits leveraging colonial white colonnades, brutalist angles, and golden-hour sunbeams.",
+    includes: ["25 fine-art edited images", "Private online review gallery", "Outfit changes allowed"],
   },
   {
     id: "srv-5",
@@ -60,6 +85,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $70 / group",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4",
+    location: "Hauz Khas Village, New Delhi",
+    reviewsCount: 57,
+    duration: "2 hours",
+    description: "Mood-driven, film-inspired aesthetic photography set amidst 13th-century stone ruins and lakeside sunset vistas.",
+    includes: ["30 vintage-graded images", "3 short creative video clips", "Instant phone delivery"],
   },
   {
     id: "srv-6",
@@ -69,9 +99,42 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $130 / guest",
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+    location: "Paris, France",
+    reviewsCount: 95,
+    duration: "2 hours",
+    description: "Chic Parisian fashion session strolling through cobblestone courtyards, café terraces, and iconic Seine riverbanks.",
+    includes: ["45 retouched digital photos", "Print-ready high resolution", "Styling assistance"],
+  },
+  {
+    id: "srv-7-photo",
+    title: "Sunrise Golden Hour Portraits at Humayun's Garden",
+    category: "Photography",
+    provider: "Tanvi",
+    priceDisplay: "From $110 / guest",
+    rating: 4.98,
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+    location: "Nizamuddin, New Delhi",
+    reviewsCount: 61,
+    duration: "2 hours",
+    description: "Catch the softest morning light without crowds in lush Persian-style gardens and magnificent red sandstone pavilions.",
+    includes: ["35 color-graded portraits", "Private cloud gallery", "Entry ticket guidance"],
+  },
+  {
+    id: "srv-8-photo",
+    title: "Drone & Cinematic Aerial Photography Over Coastal Cliffs",
+    category: "Photography",
+    provider: "Rohan",
+    priceDisplay: "From $145 / session",
+    rating: 5.0,
+    image: "https://images.unsplash.com/photo-1508672019048-805c876b67e2",
+    location: "Goa, India",
+    reviewsCount: 42,
+    duration: "2 hours",
+    description: "Stunning 4K drone cinematography and wide-angle cliffside portraits showcasing dramatic coastal landscapes.",
+    includes: ["15 aerial stills", "2 cinematic 4K video reels", "Full raw footage"],
   },
 
-  // Training & Wellness
+  // ==================== Training & Wellness ====================
   {
     id: "srv-7",
     title: "Personalized Strength, Mobility & Calisthenics Coaching",
@@ -80,6 +143,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $50 / session",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd",
+    location: "South Delhi, India",
+    reviewsCount: 51,
+    duration: "75 mins",
+    description: "One-on-one tailored fitness session focusing on posture alignment, functional bodyweight strength, and mobility restoration.",
+    includes: ["Custom movement assessment", "Take-home warm-up routine", "Nutritional pointers"],
   },
   {
     id: "srv-8",
@@ -89,6 +157,11 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $40 / session",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597",
+    location: "Sunder Nursery, New Delhi",
+    reviewsCount: 73,
+    duration: "90 mins",
+    description: "Traditional Hatha and Vinyasa yoga practice accompanied by grounding breathwork and restorative meditation among ancient trees.",
+    includes: ["Eco yoga mats provided", "Handcrafted herbal tea", "Guided breathwork sequence"],
   },
   {
     id: "srv-9",
@@ -98,7 +171,28 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $65 / person",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773",
+    location: "Rishikesh, Uttarakhand",
+    reviewsCount: 118,
+    duration: "60 mins",
+    description: "Deep somatic relaxation with handmade Himalayan singing bowls, gong resonance, and guided chakra balancing.",
+    includes: ["Aromatherapy oils", "Full body sound immersion", "Integration herbal infusion"],
   },
+  {
+    id: "srv-11-well",
+    title: "Holistic Ayurvedic Consultation & Herbal Body Therapy",
+    category: "Wellness",
+    provider: "Dr. Meera",
+    priceDisplay: "From $80 / session",
+    rating: 4.96,
+    image: "https://images.unsplash.com/photo-1600334129128-685c5582fd35",
+    location: "New Delhi, India",
+    reviewsCount: 47,
+    duration: "90 mins",
+    description: "Personalized Dosha body typing, pulse reading, and rejuvenating marma-point therapy with warm therapeutic herbal oils.",
+    includes: ["Dosha lifestyle roadmap", "Warm botanical oils", "Herbal tonic preparation"],
+  },
+
+  // ==================== Private Chef ====================
   {
     id: "srv-10",
     title: "Private Chef: 5-Course Royal Mughlai Dinner at Home",
@@ -107,5 +201,52 @@ export const MOCK_SERVICES: ServiceItem[] = [
     priceDisplay: "From $85 / guest",
     rating: 5.0,
     image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
+    location: "In-villa / At home",
+    reviewsCount: 89,
+    duration: "3.5 hours",
+    description: "An authentic culinary feast featuring slow-cooked dum biryani, saffron kebabs, roomali rotis, and artisanal shahi tukda prepared live.",
+    includes: ["Fresh premium grocery sourcing", "Table set-up & plating", "Complete kitchen cleanup"],
+  },
+  {
+    id: "srv-12-chef",
+    title: "Handmade Artisanal Pasta & Tuscan Wine Tasting",
+    category: "Chef",
+    provider: "Chef Marco",
+    priceDisplay: "From $95 / guest",
+    rating: 4.97,
+    image: "https://images.unsplash.com/photo-1551183053-bf91a1d81141",
+    location: "In-villa / At home",
+    reviewsCount: 64,
+    duration: "3 hours",
+    description: "Fresh tagliatelle, gnocchi, and filled ravioli rolled by hand, paired with rustic sauces and sommelier-selected Italian pairings.",
+    includes: ["Interactive pasta rolling", "Multi-course dinner", "Dessert tiramisu"],
+  },
+  {
+    id: "srv-13-chef",
+    title: "Omakase Sushi & Sashimi Experience by Master Chef",
+    category: "Chef",
+    provider: "Chef Kenji",
+    priceDisplay: "From $120 / guest",
+    rating: 5.0,
+    image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c",
+    location: "In-villa / At home",
+    reviewsCount: 53,
+    duration: "2.5 hours",
+    description: "Intimate Japanese omakase dinner featuring fresh market nigiri, torched wagyu, and seasonal dashi broths presented piece by piece.",
+    includes: ["Air-flown sashimi selection", "Japanese tableware & chopsticks", "Matcha sweet course"],
+  },
+  {
+    id: "srv-14-chef",
+    title: "Coastal Seafood Barbecue & Tandoor Night Under Stars",
+    category: "Chef",
+    provider: "Chef Dylan",
+    priceDisplay: "From $75 / guest",
+    rating: 4.95,
+    image: "https://images.unsplash.com/photo-1544025162-d76694265947",
+    location: "Goa & Coastal stays",
+    reviewsCount: 71,
+    duration: "3 hours",
+    description: "Charcoal-grilled tiger prawns, red snapper in banana leaves, tandoori skewers, and tropical fruit flambé on your patio.",
+    includes: ["Charcoal grill equipment", "House marinades & dips", "Complete kitchen spotless cleanup"],
   },
 ];
