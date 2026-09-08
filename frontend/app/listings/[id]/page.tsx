@@ -6,12 +6,12 @@ import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import {
   getListing,
-  createBooking,
   getListingReviews,
   createReview,
   getImageUrl,
   BookingResponse,
 } from "@/lib/api";
+import { CheckoutModal } from "@/components/CheckoutModal";
 import { Listing } from "@/types/listing";
 import { Review } from "@/types/review";
 import { useAuth } from "@/context/AuthContext";
@@ -44,7 +44,7 @@ export default function ListingDetailPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  const { currentUser } = useAuth();
+  const { currentUser, isGuest } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [listing, setListing] = useState<Listing | null>(null);
@@ -92,9 +92,9 @@ export default function ListingDetailPage() {
     return co.toISOString().split("T")[0];
   });
   const [guestCount, setGuestCount] = useState<number>(1);
-  const [isReserving, setIsReserving] = useState<boolean>(false);
+  const [showCheckout, setShowCheckout] = useState<boolean>(false);
   const [bookingSuccess, setBookingSuccess] = useState<BookingResponse | null>(null);
-  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [guestSwitchMsg, setGuestSwitchMsg] = useState<string | null>(null);
 
   const [calMonth, setCalMonth] = useState<number>(() => new Date().getMonth());
   const [calYear, setCalYear] = useState<number>(() => new Date().getFullYear());
@@ -170,27 +170,19 @@ export default function ListingDetailPage() {
     }
   };
 
-  // Handle Booking submission to backend
-  const handleReserve = async () => {
+  // Handle Reserve button click — opens checkout modal for guests,
+  // shows friendly message for host-only users.
+  const handleReserve = () => {
     if (!listing || !currentUser) return;
-    setIsReserving(true);
-    setBookingError(null);
-    setBookingSuccess(null);
-
-    try {
-      const res = await createBooking({
-        listing_id: listing.id,
-        guest_id: currentUser.id,
-        check_in: checkInDate,
-        check_out: checkOutDate,
-        guest_count: guestCount,
-      });
-      setBookingSuccess(res);
-    } catch (err: unknown) {
-      setBookingError(err instanceof Error ? err.message : "Failed to create reservation.");
-    } finally {
-      setIsReserving(false);
+    if (!isGuest) {
+      setGuestSwitchMsg(
+        "You're currently signed in as a host. Switch to a guest account (e.g. Carol Davis) in the top-right menu to make a reservation."
+      );
+      return;
     }
+    setGuestSwitchMsg(null);
+    setBookingSuccess(null);
+    setShowCheckout(true);
   };
 
   // Handle Review submission to backend
@@ -905,22 +897,23 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
-            {/* Free Cancellation Notice */}
-            <div className={styles.freeCancelNotice}>
-              Free cancellation before check-in
-            </div>
-
-            {/* Magenta Reserve Button */}
+            {/* Reserve Button */}
             <button
               type="button"
               className={styles.reserveBtn}
               onClick={handleReserve}
-              disabled={isReserving}
             >
-              {isReserving ? "Reserving…" : "Reserve"}
+              Reserve
             </button>
 
-            <p className={styles.noChargeNotice}>You won’t be charged yet</p>
+            {/* Non-guest friendly message */}
+            {guestSwitchMsg && (
+              <div style={{ color: "#c13515", fontSize: "0.83rem", marginTop: "10px", textAlign: "center", lineHeight: 1.45 }}>
+                ⚠️ {guestSwitchMsg}
+              </div>
+            )}
+
+            <p className={styles.noChargeNotice}>You won&apos;t be charged yet</p>
 
             {/* Price Breakdown */}
             <div className={styles.priceBreakdown}>
@@ -949,7 +942,7 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
-            {/* Booking Feedback Card */}
+            {/* Post-checkout confirmation badge in widget */}
             {bookingSuccess && (
               <div className={styles.bookingSuccessCard}>
                 <h4 className={styles.bookingSuccessTitle}>🎉 Reservation Confirmed!</h4>
@@ -959,18 +952,35 @@ export default function ListingDetailPage() {
               </div>
             )}
 
-            {bookingError && (
-              <div style={{ color: "#c13515", fontSize: "0.85rem", marginTop: "12px", textAlign: "center" }}>
-                ⚠️ {bookingError}
-              </div>
-            )}
-
             <button type="button" className={styles.reportLink}>
               🏳️ Report this listing
             </button>
           </aside>
         </div>
       </main>
+
+      {/* Checkout Modal */}
+      {showCheckout && listing && (
+        <CheckoutModal
+          listing={listing}
+          guestId={currentUser.id}
+          guestName={currentUser.name}
+          checkIn={checkInDate}
+          checkOut={checkOutDate}
+          nights={nights}
+          guestCount={guestCount}
+          priceSubtotal={priceSubtotal}
+          cleaningFee={cleaningFee}
+          serviceFee={serviceFee}
+          totalPrice={totalPrice}
+          primaryPhotoUrl={photos[0] || ""}
+          onClose={() => setShowCheckout(false)}
+          onConfirmed={(booking) => {
+            setBookingSuccess(booking);
+            setShowCheckout(false);
+          }}
+        />
+      )}
 
       {/* Lightbox Modal for Full Photo Gallery */}
       {lightboxOpen && (
