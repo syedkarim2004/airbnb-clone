@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
@@ -41,6 +41,61 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+// ── Pure Calendar Date Helpers (Zero Timezone Shifts) ────────────────────────
+function parseYMD(ymd: string): { year: number; month: number; day: number } {
+  const parts = ymd.split("-").map((v) => parseInt(v, 10));
+  return { year: parts[0], month: parts[1] - 1, day: parts[2] };
+}
+
+function formatYMD(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getTodayYMD(): string {
+  const now = new Date();
+  return formatYMD(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function addDaysYMD(ymd: string, days: number): string {
+  const { year, month, day } = parseYMD(ymd);
+  const d = new Date(year, month, day + days);
+  return formatYMD(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function diffDaysYMD(start: string, end: string): number {
+  if (!start || !end) return 0;
+  const p1 = parseYMD(start);
+  const p2 = parseYMD(end);
+  const d1 = new Date(p1.year, p1.month, p1.day);
+  const d2 = new Date(p2.year, p2.month, p2.day);
+  return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatDisplayDate(ymd: string): string {
+  if (!ymd) return "";
+  const { year, month, day } = parseYMD(ymd);
+  const monthShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month];
+  return `${day} ${monthShort} ${year}`;
+}
+
+// ── Option A: Max checkout date constraint based on earliest upcoming booking
+function getMaxCheckoutDate(
+  ciStr: string,
+  avail: ListingAvailability | null
+): string | null {
+  if (!ciStr || !avail) return null;
+  const unavailDates = avail.unavailable_dates || [];
+  let earliestBlocked: string | null = null;
+  for (const u of unavailDates) {
+    if (u >= ciStr) {
+      if (!earliestBlocked || u < earliestBlocked) {
+        earliestBlocked = u;
+      }
+    }
+  }
+  return earliestBlocked;
+}
+
 // ── Date range availability validator ──────────────────────────────────────
 function validateDateRange(
   ciStr: string,
@@ -49,16 +104,11 @@ function validateDateRange(
 ): { valid: boolean; error?: string } {
   if (!ciStr || !coStr) return { valid: false };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const ci = new Date(ciStr + "T00:00:00");
-  const co = new Date(coStr + "T00:00:00");
-
-  if (ci.getTime() < today.getTime()) {
+  const today = getTodayYMD();
+  if (ciStr < today) {
     return { valid: false, error: "Check-in date cannot be in the past." };
   }
-  if (co.getTime() <= ci.getTime()) {
+  if (coStr <= ciStr) {
     return { valid: false, error: "Checkout must be after check-in." };
   }
 
@@ -74,18 +124,17 @@ function validateDateRange(
       }
     }
 
-    // 2. Night-by-night check against unavailable occupied nights
+    // 2. Night-by-night check using timezone-safe string arithmetic
     const unavailSet = new Set(avail.unavailable_dates);
-    const cur = new Date(ci);
-    while (cur < co) {
-      const curStr = cur.toISOString().split("T")[0];
-      if (unavailSet.has(curStr)) {
+    let cur = ciStr;
+    while (cur < coStr) {
+      if (unavailSet.has(cur)) {
         return {
           valid: false,
           error: "Some dates in your stay are unavailable. Please choose different dates.",
         };
       }
-      cur.setDate(cur.getDate() + 1);
+      cur = addDaysYMD(cur, 1);
     }
   }
 
@@ -99,50 +148,39 @@ function findFirstAvailableRange(
   stayLength: number = 3
 ): { checkIn: string; checkOut: string } {
   const unavailSet = new Set(avail?.unavailable_dates || []);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = getTodayYMD();
+  const candidateCi = addDaysYMD(today, daysAhead);
 
-  for (let offset = daysAhead; offset < 120; offset++) {
-    const ci = new Date(today);
-    ci.setDate(today.getDate() + offset);
+  for (let offset = 0; offset < 180; offset++) {
+    const ci = addDaysYMD(candidateCi, offset);
     let allAvailable = true;
 
     for (let night = 0; night < stayLength; night++) {
-      const nightDate = new Date(ci);
-      nightDate.setDate(ci.getDate() + night);
-      const nightStr = nightDate.toISOString().split("T")[0];
-      if (unavailSet.has(nightStr)) {
+      const nightDate = addDaysYMD(ci, night);
+      if (unavailSet.has(nightDate)) {
         allAvailable = false;
         break;
       }
     }
 
     if (allAvailable) {
-      const co = new Date(ci);
-      co.setDate(ci.getDate() + stayLength);
-      const ciStr = ci.toISOString().split("T")[0];
-      const coStr = co.toISOString().split("T")[0];
-
+      const co = addDaysYMD(ci, stayLength);
       if (avail) {
         const overlap = avail.booked_ranges.some(
-          (b) => b.check_in < coStr && b.check_out > ciStr
+          (b) => b.check_in < co && b.check_out > ci
         );
         if (!overlap) {
-          return { checkIn: ciStr, checkOut: coStr };
+          return { checkIn: ci, checkOut: co };
         }
       } else {
-        return { checkIn: ciStr, checkOut: coStr };
+        return { checkIn: ci, checkOut: co };
       }
     }
   }
 
-  const fallbackCi = new Date(today);
-  fallbackCi.setDate(today.getDate() + daysAhead);
-  const fallbackCo = new Date(today);
-  fallbackCo.setDate(today.getDate() + daysAhead + stayLength);
   return {
-    checkIn: fallbackCi.toISOString().split("T")[0],
-    checkOut: fallbackCo.toISOString().split("T")[0],
+    checkIn: addDaysYMD(today, daysAhead),
+    checkOut: addDaysYMD(today, daysAhead + stayLength),
   };
 }
 
@@ -180,24 +218,40 @@ export default function ListingDetailPage() {
 
   // Booking widget state
   const [checkInDate, setCheckInDate] = useState<string>(() => {
-    const today = new Date();
-    const ci = new Date(today);
-    ci.setDate(today.getDate() + 7);
-    return ci.toISOString().split("T")[0];
+    const today = getTodayYMD();
+    return addDaysYMD(today, 7);
   });
   const [checkOutDate, setCheckOutDate] = useState<string>(() => {
-    const today = new Date();
-    const co = new Date(today);
-    co.setDate(today.getDate() + 10);
-    return co.toISOString().split("T")[0];
+    const today = getTodayYMD();
+    return addDaysYMD(today, 10);
   });
   const [guestCount, setGuestCount] = useState<number>(1);
   const [showCheckout, setShowCheckout] = useState<boolean>(false);
   const [bookingSuccess, setBookingSuccess] = useState<BookingResponse | null>(null);
   const [guestSwitchMsg, setGuestSwitchMsg] = useState<string | null>(null);
 
+  // Custom Airbnb calendar & popover states
+  const [calendarPopoverOpen, setCalendarPopoverOpen] = useState<boolean>(false);
+  const [activePickerField, setActivePickerField] = useState<"checkIn" | "checkOut">("checkIn");
+  const popoverRef = useRef<HTMLDivElement>(null);
+
   const [calMonth, setCalMonth] = useState<number>(() => new Date().getMonth());
   const [calYear, setCalYear] = useState<number>(() => new Date().getFullYear());
+
+  // Close calendar popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setCalendarPopoverOpen(false);
+      }
+    };
+    if (calendarPopoverOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [calendarPopoverOpen]);
 
   const isSaved = listing ? isFavorite(listing.id) : false;
 
@@ -291,19 +345,17 @@ export default function ListingDetailPage() {
     }
   }, [checkInDate, checkOutDate, availability]);
 
-  // Calculate nights
+  // Calculate nights using timezone-safe difference
   const nights = useMemo(() => {
-    if (!checkInDate || !checkOutDate) return 1;
-    const d1 = new Date(checkInDate);
-    const d2 = new Date(checkOutDate);
-    const diff = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 1;
+    if (!checkInDate || !checkOutDate) return 0;
+    const diff = diffDaysYMD(checkInDate, checkOutDate);
+    return diff > 0 ? diff : 0;
   }, [checkInDate, checkOutDate]);
 
   // Price calculations matching backend convention (5% service fee)
   const priceSubtotal = useMemo(() => {
     if (!listing) return 0;
-    return listing.price_per_night * nights;
+    return listing.price_per_night * (nights || 1);
   }, [listing, nights]);
 
   const serviceFee = useMemo(() => {
@@ -316,10 +368,9 @@ export default function ListingDetailPage() {
   const isReserveDisabled = useMemo(() => {
     if (!checkInDate || !checkOutDate) return true;
     if (availabilityLoading) return true;
-    if (rangeError) return true;
     const check = validateDateRange(checkInDate, checkOutDate, availability);
     return !check.valid;
-  }, [checkInDate, checkOutDate, availabilityLoading, rangeError, availability]);
+  }, [checkInDate, checkOutDate, availabilityLoading, availability]);
 
   // Handle Share link
   const handleShare = () => {
@@ -451,71 +502,105 @@ export default function ListingDetailPage() {
   const nextCalYear = calMonth === 11 ? calYear + 1 : calYear;
 
   const handleCalDateClick = (year: number, month: number, day: number) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selected = new Date(year, month, day);
-    selected.setHours(0, 0, 0, 0);
-    if (selected.getTime() < today.getTime()) return;
+    const formatted = formatYMD(year, month, day);
+    const today = getTodayYMD();
+    if (formatted < today) return; // past date
 
-    const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-    if (!checkInDate || (checkInDate && checkOutDate)) {
+    // 1. If currently selecting check-in (or resetting):
+    if (activePickerField === "checkIn" || !checkInDate || (checkInDate && checkOutDate)) {
       if (unavailableSet.has(formatted)) {
-        setRangeError("That date is unavailable. Please select an available check-in date.");
-        return;
+        return; // occupied night cannot be check-in
       }
       setCheckInDate(formatted);
       setCheckOutDate("");
       setRangeError(null);
-    } else {
+      setActivePickerField("checkOut");
+      return;
+    }
+
+    // 2. If currently selecting checkout:
+    if (activePickerField === "checkOut" && checkInDate) {
       if (formatted <= checkInDate) {
         if (unavailableSet.has(formatted)) {
-          setRangeError("That date is unavailable. Please select an available check-in date.");
           return;
         }
+        // User clicked an earlier available date -> treat as new check-in
         setCheckInDate(formatted);
         setCheckOutDate("");
         setRangeError(null);
-      } else {
-        const check = validateDateRange(checkInDate, formatted, availability);
-        if (!check.valid) {
-          setRangeError(
-            check.error ||
-              "Some dates in your stay are unavailable. Please choose different dates."
-          );
-          return;
-        }
-        setCheckOutDate(formatted);
-        setRangeError(null);
+        setActivePickerField("checkOut");
+        return;
       }
+
+      // Check Option A constraint: date cannot be on or past the first blocked night
+      const maxCo = getMaxCheckoutDate(checkInDate, availability);
+      if (maxCo && formatted >= maxCo) {
+        return; // beyond allowed checkout
+      }
+
+      const check = validateDateRange(checkInDate, formatted, availability);
+      if (!check.valid) {
+        setRangeError(check.error || "Selected dates are unavailable.");
+        return;
+      }
+
+      setCheckOutDate(formatted);
+      setRangeError(null);
+      setActivePickerField("checkIn");
+      setCalendarPopoverOpen(false);
     }
   };
 
   const renderDetailMonthGrid = (year: number, month: number) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayIndex = new Date(year, month, 1).getDay();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getTodayYMD();
+    const maxCo = checkInDate && !checkOutDate ? getMaxCheckoutDate(checkInDate, availability) : null;
 
     return (
       <div className={styles.daysGrid}>
         {Array.from({ length: firstDayIndex }).map((_, i) => (
-          <button
+          <div
             key={`empty-${year}-${month}-${i}`}
-            type="button"
             className={`${styles.dayBtn} ${styles.dayDisabled}`}
-            disabled
           />
         ))}
 
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const dayNum = i + 1;
-          const currentDayDate = new Date(year, month, dayNum);
-          currentDayDate.setHours(0, 0, 0, 0);
-          const formatted = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-          const isPast = currentDayDate.getTime() < today.getTime();
-          const isUnavailable = unavailableSet.has(formatted);
-          const isDisabled = isPast || isUnavailable;
+          const formatted = formatYMD(year, month, dayNum);
+          const isPast = formatted < today;
+          const isUnavailableNight = unavailableSet.has(formatted);
+
+          // Option A availability calculation:
+          let isDisabled = isPast;
+          let isUnavailableStyle = isUnavailableNight;
+
+          if (checkInDate && !checkOutDate) {
+            // During checkout selection:
+            if (formatted < checkInDate) {
+              if (isUnavailableNight) {
+                isDisabled = true;
+                isUnavailableStyle = true;
+              }
+            } else if (formatted === checkInDate) {
+              // Checkout cannot be same day as check-in
+              isDisabled = true;
+            } else {
+              // formatted > checkInDate
+              if (isUnavailableNight || (maxCo && formatted >= maxCo)) {
+                isDisabled = true;
+                isUnavailableStyle = true;
+              }
+            }
+          } else {
+            // During check-in selection:
+            if (isUnavailableNight) {
+              isDisabled = true;
+              isUnavailableStyle = true;
+            }
+          }
+
           const isCheckIn = checkInDate === formatted;
           const isCheckOut = checkOutDate === formatted;
           const inRange =
@@ -529,16 +614,17 @@ export default function ListingDetailPage() {
               type="button"
               key={`day-${year}-${month}-${dayNum}`}
               disabled={isDisabled}
+              aria-disabled={isDisabled}
               aria-label={
-                isUnavailable
+                isUnavailableStyle
                   ? `${dayNum} ${MONTH_NAMES[month]} (Unavailable)`
                   : `${dayNum} ${MONTH_NAMES[month]}`
               }
-              title={isUnavailable ? "Unavailable / Booked" : undefined}
+              title={isUnavailableStyle ? "Unavailable / Booked" : undefined}
               className={`${styles.dayBtn} ${
                 isPast
                   ? styles.dayDisabled
-                  : isUnavailable
+                  : isUnavailableStyle
                   ? styles.dayUnavailable
                   : ""
               } ${isCheckIn || isCheckOut ? styles.daySelected : ""} ${
@@ -787,9 +873,9 @@ export default function ListingDetailPage() {
               </h3>
               <p className={styles.calendarSubtitle}>
                 {checkInDate && checkOutDate
-                  ? `${checkInDate} – ${checkOutDate}`
+                  ? `${formatDisplayDate(checkInDate)} – ${formatDisplayDate(checkOutDate)}`
                   : checkInDate
-                  ? `${checkInDate} – Select checkout`
+                  ? `${formatDisplayDate(checkInDate)} – Select checkout`
                   : "Select dates"}
               </p>
 
@@ -820,15 +906,7 @@ export default function ListingDetailPage() {
                       type="button"
                       onClick={handlePrevMonth}
                       disabled={isPrevMonthDisabled()}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: isPrevMonthDisabled() ? "default" : "pointer",
-                        opacity: isPrevMonthDisabled() ? 0.3 : 1,
-                        fontSize: "1.1rem",
-                        padding: "2px 8px",
-                        borderRadius: "50%",
-                      }}
+                      className={styles.monthNavBtn}
                       aria-label="Previous month"
                     >
                       ‹
@@ -850,14 +928,7 @@ export default function ListingDetailPage() {
                     <button
                       type="button"
                       onClick={handleNextMonth}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: "1.1rem",
-                        padding: "2px 8px",
-                        borderRadius: "50%",
-                      }}
+                      className={styles.monthNavBtn}
                       aria-label="Next month"
                     >
                       ›
@@ -875,13 +946,13 @@ export default function ListingDetailPage() {
                   type="button"
                   className={styles.clearDatesBtn}
                   onClick={() => {
-                    const safe = findFirstAvailableRange(availability, 7, 3);
-                    setCheckInDate(safe.checkIn);
-                    setCheckOutDate(safe.checkOut);
+                    setCheckInDate("");
+                    setCheckOutDate("");
+                    setActivePickerField("checkIn");
                     setRangeError(null);
                   }}
                 >
-                  Reset dates
+                  Clear dates
                 </button>
               </div>
             </section>
@@ -1090,67 +1161,189 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Check-in / Checkout / Guests Box */}
-            <div className={styles.datesGuestsBox}>
-              <div className={styles.datesRow}>
-                <div className={styles.dateInputCol}>
-                  <label className={styles.boxLabel}>Check-in</label>
-                  <input
-                    type="date"
-                    min={new Date().toISOString().split("T")[0]}
-                    className={styles.dateValueInput}
-                    value={checkInDate}
-                    onChange={(e) => {
-                      const val = e.target.value;
+            <div className={styles.datesPickerContainer} ref={popoverRef}>
+              <div className={styles.datesGuestsBox}>
+                <div className={styles.datesRow}>
+                  <button
+                    type="button"
+                    data-testid="checkin-trigger"
+                    className={`${styles.dateBoxBtn} ${activePickerField === "checkIn" && calendarPopoverOpen ? styles.dateBoxBtnActive : ""}`}
+                    onClick={() => {
+                      setActivePickerField("checkIn");
+                      setCalendarPopoverOpen((open) => !open || activePickerField !== "checkIn");
+                    }}
+                    aria-label="Select check-in date"
+                  >
+                    <span className={styles.boxLabel}>Check-in</span>
+                    <span className={checkInDate ? styles.boxValueText : styles.boxValuePlaceholder}>
+                      {checkInDate ? formatDisplayDate(checkInDate) : "Add date"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="checkout-trigger"
+                    className={`${styles.dateBoxBtn} ${activePickerField === "checkOut" && calendarPopoverOpen ? styles.dateBoxBtnActive : ""}`}
+                    onClick={() => {
+                      setActivePickerField("checkOut");
+                      setCalendarPopoverOpen((open) => !open || activePickerField !== "checkOut");
+                    }}
+                    aria-label="Select checkout date"
+                  >
+                    <span className={styles.boxLabel}>Checkout</span>
+                    <span className={checkOutDate ? styles.boxValueText : styles.boxValuePlaceholder}>
+                      {checkOutDate ? formatDisplayDate(checkOutDate) : "Add date"}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Visually hidden but accessible date inputs for script compatibility */}
+                <input
+                  type="date"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+                  value={checkInDate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
                       setCheckInDate(val);
                       if (checkOutDate) {
-                        if (val >= checkOutDate) {
-                          const nextDay = new Date(val);
-                          nextDay.setDate(nextDay.getDate() + 1);
-                          const nextStr = nextDay.toISOString().split("T")[0];
-                          setCheckOutDate(nextStr);
-                          const check = validateDateRange(val, nextStr, availability);
-                          setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
-                        } else {
-                          const check = validateDateRange(val, checkOutDate, availability);
-                          setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
-                        }
+                        const check = validateDateRange(val, checkOutDate, availability);
+                        setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
                       }
-                    }}
-                  />
-                </div>
-                <div className={styles.dateInputCol}>
-                  <label className={styles.boxLabel}>Checkout</label>
-                  <input
-                    type="date"
-                    min={checkInDate || new Date().toISOString().split("T")[0]}
-                    className={styles.dateValueInput}
-                    value={checkOutDate}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    }
+                  }}
+                />
+                <input
+                  type="date"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+                  value={checkOutDate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
                       setCheckOutDate(val);
                       if (checkInDate) {
                         const check = validateDateRange(checkInDate, val, availability);
                         setRangeError(check.valid ? null : (check.error || "Selected dates are unavailable."));
                       }
-                    }}
-                  />
+                    }
+                  }}
+                />
+
+                <div className={styles.guestsInputRow}>
+                  <label className={styles.boxLabel}>Guests</label>
+                  <select
+                    className={styles.guestsSelect}
+                    value={guestCount}
+                    onChange={(e) => setGuestCount(parseInt(e.target.value, 10))}
+                  >
+                    {Array.from({ length: listing.max_guests }).map((_, idx) => (
+                      <option key={`guest-opt-${idx + 1}`} value={idx + 1}>
+                        {idx + 1} {idx + 1 === 1 ? "guest" : "guests"}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              <div className={styles.guestsInputRow}>
-                <label className={styles.boxLabel}>Guests</label>
-                <select
-                  className={styles.guestsSelect}
-                  value={guestCount}
-                  onChange={(e) => setGuestCount(parseInt(e.target.value, 10))}
-                >
-                  {Array.from({ length: listing.max_guests }).map((_, idx) => (
-                    <option key={`guest-opt-${idx + 1}`} value={idx + 1}>
-                      {idx + 1} {idx + 1 === 1 ? "guest" : "guests"}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Floating Date Picker Popover */}
+              {calendarPopoverOpen && (
+                <div className={styles.calendarPopover}>
+                  <div className={styles.popoverHeader}>
+                    <div>
+                      <h4 className={styles.popoverTitle}>
+                        {nights > 0
+                          ? `${nights} ${nights === 1 ? "night" : "nights"}`
+                          : activePickerField === "checkIn"
+                          ? "Select check-in date"
+                          : "Select checkout date"}
+                      </h4>
+                      <p className={styles.popoverSubtitle}>
+                        {checkInDate && checkOutDate
+                          ? `${formatDisplayDate(checkInDate)} – ${formatDisplayDate(checkOutDate)}`
+                          : checkInDate
+                          ? `${formatDisplayDate(checkInDate)} – Select checkout`
+                          : "Add your travel dates for exact pricing"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.popoverCloseBtn}
+                      onClick={() => setCalendarPopoverOpen(false)}
+                      aria-label="Close calendar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className={styles.calendarMonthsRow}>
+                    {/* Month 1 */}
+                    <div className={styles.monthBlock}>
+                      <div className={styles.monthHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <button
+                          type="button"
+                          onClick={handlePrevMonth}
+                          disabled={isPrevMonthDisabled()}
+                          className={styles.monthNavBtn}
+                          aria-label="Previous month"
+                        >
+                          ‹
+                        </button>
+                        <span>{MONTH_NAMES[calMonth]} {calYear}</span>
+                        <span style={{ width: "24px" }} />
+                      </div>
+                      <div className={styles.weekDaysRow}>
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                      </div>
+                      {renderDetailMonthGrid(calYear, calMonth)}
+                    </div>
+
+                    {/* Month 2 */}
+                    <div className={styles.monthBlock}>
+                      <div className={styles.monthHeader} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ width: "24px" }} />
+                        <span>{MONTH_NAMES[nextCalMonth]} {nextCalYear}</span>
+                        <button
+                          type="button"
+                          onClick={handleNextMonth}
+                          className={styles.monthNavBtn}
+                          aria-label="Next month"
+                        >
+                          ›
+                        </button>
+                      </div>
+                      <div className={styles.weekDaysRow}>
+                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                      </div>
+                      {renderDetailMonthGrid(nextCalYear, nextCalMonth)}
+                    </div>
+                  </div>
+
+                  <div className={styles.popoverFooter}>
+                    <button
+                      type="button"
+                      className={styles.clearDatesBtn}
+                      onClick={() => {
+                        setCheckInDate("");
+                        setCheckOutDate("");
+                        setActivePickerField("checkIn");
+                        setRangeError(null);
+                      }}
+                    >
+                      Clear dates
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.popoverDoneBtn}
+                      onClick={() => setCalendarPopoverOpen(false)}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Availability / Range notices */}

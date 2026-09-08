@@ -487,8 +487,9 @@
 }
 
 .dayDisabled {
-  color: #d3d3d3;
-  cursor: not-allowed;
+  color: #d3d3d3 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
 }
 
 .dayUnavailable {
@@ -496,7 +497,8 @@
   text-decoration: line-through;
   background-color: #f7f7f7 !important;
   cursor: not-allowed !important;
-  opacity: 0.6;
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .clearDatesBtn {
@@ -752,17 +754,161 @@
 }
 
 /* Picker Box */
+.datesPickerContainer {
+  position: relative;
+  margin-bottom: 16px;
+}
+
 .datesGuestsBox {
   border: 1px solid #b0b0b0;
   border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 16px;
 }
 
 .datesRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid #b0b0b0;
+  position: relative;
+}
+
+.dateBoxBtn {
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 0;
+}
+
+.dateBoxBtn:first-child {
+  border-right: 1px solid #b0b0b0;
+}
+
+.dateBoxBtn:hover {
+  background-color: #f7f7f7;
+}
+
+.dateBoxBtnActive {
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px #222222 inset;
+}
+
+.boxValueText {
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #222222;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boxValuePlaceholder {
+  font-size: 0.86rem;
+  font-weight: 400;
+  color: #717171;
+  margin-top: 2px;
+}
+
+/* Floating Date Picker Popover */
+.calendarPopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  border: 1px solid #e0e0e0;
+  padding: 20px;
+  z-index: 100;
+  width: min(600px, 92vw);
+}
+
+.popoverHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.popoverTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 4px 0;
+}
+
+.popoverSubtitle {
+  font-size: 0.85rem;
+  color: #717171;
+  margin: 0;
+}
+
+.popoverCloseBtn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #717171;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: background-color 0.15s ease;
+  line-height: 1;
+}
+
+.popoverCloseBtn:hover {
+  background-color: #f7f7f7;
+  color: #222222;
+}
+
+.popoverFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #ebebeb;
+}
+
+.popoverDoneBtn {
+  background: #222222;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.popoverDoneBtn:hover {
+  background: #000000;
+}
+
+.monthNavBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 4px 10px;
+  border-radius: 50%;
+  transition: background-color 0.15s ease;
+  line-height: 1;
+}
+
+.monthNavBtn:hover:not(:disabled) {
+  background-color: #f7f7f7;
+}
+
+.monthNavBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 .dateInputCol {
